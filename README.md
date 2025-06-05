@@ -11,7 +11,7 @@ In-line format:
 - (recursive) `__` means underline
 - (recursive) `!!` means highlight
 - (atomic) `""` quotes text literally.
-- (atomic) ``` `` ``` quotes text and interprete them (by default, interprete as monospace verbatim)
+- (atomic) ``` `` ``` quotes text and interprete them (by default, interprete as monospace verbatim), where the ending quote can be followed by an interpreter name.
 
 Paragraph-level format:
 
