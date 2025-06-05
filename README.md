@@ -1,5 +1,28 @@
 # Markright
 
+Markright is a markdown-like language but done right. This repository describes the design of Markright and provides a compiler from Markright to HTML.
+
+## Design
+
+In-line format:
+
+- (recursive) `**` means boldface
+- (recursive) `//` means italic
+- (recursive) `__` means underline
+- (recursive) `!!` means highlight
+- (atomic) `""` quotes text literally.
+- (atomic) ``` `` ``` quotes text and interprete them (by default, interprete as monospace verbatim)
+
+Paragraph-level format:
+
+```
+- Unordered list
+# Ordered list
+| Table cell
+|- Table row break
+```
+
+
 ## Development
 
 ### Installation
