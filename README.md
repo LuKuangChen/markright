@@ -1,22 +1,20 @@
-# ReScript Project Template
+# Markright
 
-- [Installation](../../README.md)
+## Development
 
-Official ReScript starter template.
-
-## Installation
+### Installation
 
 ```sh
 npm install
 ```
 
-## Build
+### Build
 
 - Build: `npm run res:build`
 - Clean: `npm run res:clean`
 - Build & watch: `npm run res:dev`
 
-## Run
+### Run
 
 ```sh
 node src/Demo.res.js
