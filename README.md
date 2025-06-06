@@ -10,16 +10,20 @@ In-line format:
 - (recursive) `//` means italic
 - (recursive) `__` means underline
 - (recursive) `!!` means highlight
-- (atomic) `""` quotes text literally.
-- (atomic) ``` `` ``` quotes text and interprete them (by default, interprete as monospace verbatim), where the ending quote can be followed by an interpreter name.
+- (atomic) ``` `` ``` means monospace
+- (atomic) `""` quotes text and interprete them (by default, interprete as monospace verbatim), where the ending quote can be followed by an interpreter name.
 
 Paragraph-level format:
 
 ```
 - Unordered list
 # Ordered list
+> Block quote
 | Table cell
-|- Table row break
+|| Table cell at the second left column
+||| etc., etc.
+|- Table start / end / row break
+""" block interp
 ```
 
 

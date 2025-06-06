@@ -6,6 +6,138 @@ import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as Core__List from "@rescript/core/src/Core__List.res.mjs";
 import * as PervasivesU from "rescript/lib/es6/pervasivesU.js";
 
+function parseDocument(it) {
+  var takeAllIndented = function (indent, lines) {
+    if (!lines) {
+      return [
+              /* [] */0,
+              /* [] */0
+            ];
+    }
+    var lines$1 = lines.tl;
+    var line = lines.hd;
+    if (!(line === "" || line.startsWith(" ".repeat(indent)))) {
+      return [
+              /* [] */0,
+              {
+                hd: line,
+                tl: lines$1
+              }
+            ];
+    }
+    var match = takeAllIndented(indent, lines$1);
+    return [
+            {
+              hd: line.substring(indent, line.length),
+              tl: match[0]
+            },
+            match[1]
+          ];
+  };
+  var parse = function (lines) {
+    if (!lines) {
+      return /* [] */0;
+    }
+    var lines$1 = lines.tl;
+    var line = lines.hd;
+    if (line.startsWith("- ")) {
+      line.substring(2, line.length);
+      var match = takeAllIndented(2, lines$1);
+      var token_1 = PervasivesU.failwith("todo");
+      var token = {
+        TAG: "ListItem",
+        ordered: false,
+        content: token_1
+      };
+      return {
+              hd: token,
+              tl: parse(match[1])
+            };
+    }
+    if (line.startsWith("# ")) {
+      line.substring(2, line.length);
+      var match$1 = takeAllIndented(2, lines$1);
+      var token_1$1 = PervasivesU.failwith("todo");
+      var token$1 = {
+        TAG: "ListItem",
+        ordered: true,
+        content: token_1$1
+      };
+      return {
+              hd: token$1,
+              tl: parse(match$1[1])
+            };
+    }
+    if (line.startsWith("> ")) {
+      line.substring(2, line.length);
+      var match$2 = takeAllIndented(2, lines$1);
+      var token$2 = {
+        TAG: "Final",
+        _0: {
+          TAG: "Blockquote",
+          _0: PervasivesU.failwith("todo")
+        }
+      };
+      return {
+              hd: token$2,
+              tl: parse(match$2[1])
+            };
+    }
+    if (line.startsWith("| ")) {
+      line.substring(2, line.length);
+      var match$3 = takeAllIndented(2, lines$1);
+      var token_1$2 = PervasivesU.failwith("todo");
+      var token$3 = {
+        TAG: "TableElement",
+        col: 0,
+        content: token_1$2
+      };
+      return {
+              hd: token$3,
+              tl: parse(match$3[1])
+            };
+    }
+    if (line.startsWith("|| ")) {
+      line.substring(3, line.length);
+      var match$4 = takeAllIndented(3, lines$1);
+      var token_1$3 = PervasivesU.failwith("todo");
+      var token$4 = {
+        TAG: "TableElement",
+        col: 1,
+        content: token_1$3
+      };
+      return {
+              hd: token$4,
+              tl: parse(match$4[1])
+            };
+    }
+    if (!line.startsWith("||| ")) {
+      if (line === "|-") {
+        return {
+                hd: "TableHLine",
+                tl: parse(lines$1)
+              };
+      } else {
+        return PervasivesU.failwith("todo");
+      }
+    }
+    line.substring(4, line.length);
+    var match$5 = takeAllIndented(4, lines$1);
+    var token_1$4 = PervasivesU.failwith("todo");
+    var token$5 = {
+      TAG: "TableElement",
+      col: 2,
+      content: token_1$4
+    };
+    return {
+            hd: token$5,
+            tl: parse(match$5[1])
+          };
+  };
+  Core__List.fromArray(it.split("\n"));
+  return PervasivesU.failwith("todo");
+}
+
 function parseParagraph(it) {
   var makeRecParser = function (k, delim, tag) {
     return function (it) {
@@ -41,7 +173,7 @@ function parseParagraph(it) {
           return [{
                     TAG: "Final",
                     _0: {
-                      TAG: "Eval",
+                      TAG: "SEval",
                       _0: token
                     }
                   }];
@@ -109,7 +241,7 @@ function spanToString(span) {
     case "Tagged" :
         var tag = Concepts.Tag.toString(span._0);
         return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
-    case "Eval" :
+    case "SEval" :
         var tag$1 = "code";
         return "<" + tag$1 + ">" + $$escape(span._0) + "</" + tag$1 + ">";
     case "Plain" :
@@ -119,6 +251,7 @@ function spanToString(span) {
 }
 
 export {
+  parseDocument ,
   parseParagraph ,
   $$escape ,
   spansToString ,

@@ -20,9 +20,15 @@ module Tag = {
 }
 type tag = Tag.t
 
-type rec document = list<paragraph>
+type rec document = list<block>
 and paragraph = list<span>
+and block =
+  | Paragraph(paragraph)
+  | List({ordered: bool, content: document})
+  | Blockquote(document)
+  | Table(list<list<document>>)
+  | BEval(string)
 and span =
   | Tagged(tag, list<span>)
-  | Eval(string)
+  | SEval(string)
   | Plain(string)
