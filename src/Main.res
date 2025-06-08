@@ -1,78 +1,29 @@
 open Concepts
 
-type document_token = 
-    | ParagraphLine(string)
-    | ListItem({ordered: bool, content: document})
-    | TableElement({col: int, content: document})
-    | TableBreak
-    | Empty
-    | Final(block)
+type list_element = {ordered: bool, content: document}
 
-let rec parseDocument = (it: string): document => {
-  let rec takeAllIndented = (indent: int, lines: list<string>) => {
-    switch lines {
-    | list{} => (list{}, list{})
-    | list{line, ...lines} =>
-      if line == "" || line->String.startsWith(String.repeat(" ", indent)) {
-        let (head, lines) = takeAllIndented(indent, lines)
-        (list{line->String.substring(~start=indent, ~end=line->String.length), ...head}, lines)
-      } else {
-        (list{}, list{line, ...lines})
+type table_element =
+  | Cell({col: int, content: document})
+  | Break
+
+type document_token =
+  | ParagraphLine(string)
+  | ListElement(list_element)
+  | TableElement(table_element)
+  | Empty
+  | Final(block)
+
+let rec takeWhile = (xs, f) => {
+  switch xs {
+  | list{} => (list{}, list{})
+  | list{x, ...xs} => switch f(x) {
+    | None => (list{}, list{x, ...xs})
+    | Some(y) => {
+        let (ys, xs) = takeWhile(xs, f)
+        (list{y, ...ys}, xs)
       }
     }
   }
-  let rec parse = (lines: list<string>): list<document_token> => {
-    switch lines {
-    | list{} => list{}
-    | list{line, ...lines} =>
-      if line->String.startsWith("- ") {
-        let line = line->String.substring(~start=2, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(2, lines)
-        let token: document_token = ListItem({ordered: false, content: parseDocument(list{line, ...head})})
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("# ") {
-        let line = line->String.substring(~start=2, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(2, lines)
-        let token: document_token = ListItem({ordered: true, content: parseDocument(list{line, ...head})})
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("> ") {
-        let line = line->String.substring(~start=2, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(2, lines)
-        let token: document_token = Final(Blockquote(parseDocument(list{line, ...head})))
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("| ") {
-        let line = line->String.substring(~start=2, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(2, lines)
-        let token: document_token = TableElement({col: 0, content: parseDocument(list{line, ...head})})
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("|| ") {
-        let line = line->String.substring(~start=3, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(3, lines)
-        let token: document_token = TableElement({col: 1, content: parseDocument(list{line, ...head})})
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("||| ") {
-        let line = line->String.substring(~start=4, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(4, lines)
-        let token: document_token = TableElement({col: 2, content: parseDocument(list{line, ...head})})
-        list{token, ...parse(lines)}
-      } else if line == "|-" {
-        let token: document_token = TableBreak
-        list{token, ...parse(lines)}
-      } else if line == "" {
-        list{Empty, ...parse(lines)}
-      } else {
-        list{ParagraphLine(line), ...parse(lines)}
-      } 
-    }
-  }
-  and parseDocument = (lines: list<string>): document => {
-    let lines = parse(lines)
-    failwith("todo")
-  }
-  it
-  ->String.split("\n")
-  ->List.fromArray
-  ->parseDocument
 }
 
 type token =
@@ -140,6 +91,134 @@ let parseParagraph = (it: string) => {
     }
   })
   ->groupTokens
+}
+
+
+let parseDocument = (it: string): document => {
+  let rec takeAllIndented = (indent: int, lines: list<string>) => {
+    switch lines {
+    | list{} => (list{}, list{})
+    | list{line, ...lines} =>
+      if line == "" || line->String.startsWith(String.repeat(" ", indent)) {
+        let (head, lines) = takeAllIndented(indent, lines)
+        (list{line->String.substring(~start=indent, ~end=line->String.length), ...head}, lines)
+      } else {
+        (list{}, list{line, ...lines})
+      }
+    }
+  }
+  let rec parse = (lines: list<string>): list<document_token> => {
+    switch lines {
+    | list{} => list{}
+    | list{line, ...lines} =>
+      if line->String.startsWith("- ") {
+        let line = line->String.substring(~start=2, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(2, lines)
+        let token: document_token = ListElement({
+          ordered: false,
+          content: parseDocument(list{line, ...head}),
+        })
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("# ") {
+        let line = line->String.substring(~start=2, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(2, lines)
+        let token: document_token = ListElement({
+          ordered: true,
+          content: parseDocument(list{line, ...head}),
+        })
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("> ") {
+        let line = line->String.substring(~start=2, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(2, lines)
+        let token: document_token = Final(Blockquote(parseDocument(list{line, ...head})))
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("| ") {
+        let line = line->String.substring(~start=2, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(2, lines)
+        let token: document_token = TableElement(
+          Cell({col: 0, content: parseDocument(list{line, ...head})}),
+        )
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("|| ") {
+        let line = line->String.substring(~start=3, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(3, lines)
+        let token: document_token = TableElement(
+          Cell({col: 1, content: parseDocument(list{line, ...head})}),
+        )
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("||| ") {
+        let line = line->String.substring(~start=4, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(4, lines)
+        let token: document_token = TableElement(
+          Cell({col: 2, content: parseDocument(list{line, ...head})}),
+        )
+        list{token, ...parse(lines)}
+      } else if line == "|-" {
+        let token: document_token = TableElement(Break)
+        list{token, ...parse(lines)}
+      } else if line == "" {
+        list{Empty, ...parse(lines)}
+      } else {
+        list{ParagraphLine(line), ...parse(lines)}
+      }
+    }
+  }
+  and makeTable = (es: list<table_element>): list<list<document>> => {
+    failwith("todo")
+  }
+  and groupLines = (ts: list<document_token>): document => {
+    switch ts {
+    | list{} => list{}
+    | list{TableElement(e), ...ts} => {
+        let (es, ts) = takeWhile(ts, t => {
+          switch t {
+          | TableElement(e) => Some(e)
+          | _ => None
+          }
+        })
+        let es = list{e, ...es}
+        list{Table(makeTable(es)), ...groupLines(ts)}
+      }
+    | list{ListElement({ordered: true, content}), ...ts} => {
+        let (es, ts) = takeWhile(ts, t => {
+          switch t {
+          | ListElement({ordered: true, content}) => Some(content)
+          | _ => None
+          }
+        })
+        let es = list{content, ...es}
+        list{List({ordered: true, content: es}), ...groupLines(ts)}
+      }
+    | list{ListElement({ordered: false, content}), ...ts} => {
+        let (es, ts) = takeWhile(ts, t => {
+          switch t {
+          | ListElement({ordered: false, content}) => Some(content)
+          | _ => None
+          }
+        })
+        let es = list{content, ...es}
+        list{List({ordered: false, content: es}), ...groupLines(ts)}
+      }
+    | list{ParagraphLine(line)} => {let (es, ts) = takeWhile(ts, t => {
+          switch t {
+          | ParagraphLine(content) => Some(content)
+          | _ => None
+          }
+        })
+        let es = list{line, ...es}
+        list{Paragraph(parseParagraph(es->List.toArray->Array.join(" "))), ...groupLines(ts)}
+    }
+    | _ => failwith("todo")
+    }
+  }
+  and parseDocument = (lines: list<string>): document => {
+    let lines = parse(lines)
+    groupLines(lines)
+  }
+  it
+  ->String.split("\n")
+  ->List.fromArray
+  ->parseDocument
 }
 
 let escape = (x: string): string => {

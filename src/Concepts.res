@@ -24,7 +24,7 @@ type rec document = list<block>
 and paragraph = list<span>
 and block =
   | Paragraph(paragraph)
-  | List({ordered: bool, content: document})
+  | List({ordered: bool, content: list<document>})
   | Blockquote(document)
   | Table(list<list<document>>)
   | BEval(string)
