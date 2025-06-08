@@ -214,45 +214,7 @@ function parseDocument(it) {
               tl: parse(match$2[1])
             };
     }
-    if (line.startsWith("| ")) {
-      var line$4 = line.substring(2, line.length);
-      var match$3 = takeAllIndented(2, lines$1);
-      var token$3 = {
-        TAG: "TableElement",
-        _0: {
-          TAG: "Cell",
-          col: 0,
-          content: parseDocument$1({
-                hd: line$4,
-                tl: match$3[0]
-              })
-        }
-      };
-      return {
-              hd: token$3,
-              tl: parse(match$3[1])
-            };
-    }
-    if (line.startsWith("|| ")) {
-      var line$5 = line.substring(3, line.length);
-      var match$4 = takeAllIndented(3, lines$1);
-      var token$4 = {
-        TAG: "TableElement",
-        _0: {
-          TAG: "Cell",
-          col: 1,
-          content: parseDocument$1({
-                hd: line$5,
-                tl: match$4[0]
-              })
-        }
-      };
-      return {
-              hd: token$4,
-              tl: parse(match$4[1])
-            };
-    }
-    if (!line.startsWith("||| ")) {
+    if (!line.startsWith("| ")) {
       if (line === "|-") {
         return {
                 hd: {
@@ -276,65 +238,118 @@ function parseDocument(it) {
               };
       }
     }
-    var line$6 = line.substring(4, line.length);
-    var match$5 = takeAllIndented(4, lines$1);
-    var token$5 = {
+    var line$4 = line.substring(2, line.length);
+    var match$3 = takeAllIndented(2, lines$1);
+    var token$3 = {
       TAG: "TableElement",
       _0: {
         TAG: "Cell",
-        col: 2,
-        content: parseDocument$1({
-              hd: line$6,
-              tl: match$5[0]
+        _0: parseDocument$1({
+              hd: line$4,
+              tl: match$3[0]
             })
       }
     };
     return {
-            hd: token$5,
-            tl: parse(match$5[1])
+            hd: token$3,
+            tl: parse(match$3[1])
           };
   };
-  var parseDocument$1 = function (lines) {
-    var lines$1 = parse(lines);
-    return groupLines(lines$1);
-  };
-  var groupLines = function (ts) {
-    if (!ts) {
-      return /* [] */0;
-    }
-    var e = ts.hd;
-    if (typeof e !== "object") {
-      return PervasivesU.failwith("todo");
-    }
-    switch (e.TAG) {
-      case "ParagraphLine" :
-          if (ts.tl) {
-            return PervasivesU.failwith("todo");
+  var makeTable = function (es) {
+    var collectRows = function (_row, _es) {
+      while(true) {
+        var es = _es;
+        var row = _row;
+        if (es) {
+          var cell = es.hd;
+          if (typeof cell !== "object") {
+            var row$1 = Core__List.reverse(row);
+            return {
+                    hd: row$1,
+                    tl: collectRows(/* [] */0, es.tl)
+                  };
           }
-          var match = takeWhile(ts, (function (t) {
-                  if (typeof t !== "object" || t.TAG !== "ParagraphLine") {
-                    return ;
-                  } else {
-                    return t._0;
-                  }
-                }));
-          var es_0 = e._0;
-          var es_1 = match[0];
-          var es = {
-            hd: es_0,
-            tl: es_1
+          _es = es.tl;
+          _row = {
+            hd: cell._0,
+            tl: row
           };
-          return {
-                  hd: {
-                    TAG: "Paragraph",
-                    _0: parseParagraph(Core__List.toArray(es).join(" "))
-                  },
-                  tl: groupLines(match[1])
-                };
-      case "ListElement" :
-          var match$1 = e._0;
-          if (match$1.ordered) {
-            var match$2 = takeWhile(ts.tl, (function (t) {
+          continue ;
+        }
+        var row$2 = Core__List.reverse(row);
+        return {
+                hd: row$2,
+                tl: /* [] */0
+              };
+      };
+    };
+    return collectRows(/* [] */0, es);
+  };
+  var groupLines = function (_ts) {
+    while(true) {
+      var ts = _ts;
+      if (!ts) {
+        return /* [] */0;
+      }
+      var e = ts.hd;
+      if (typeof e !== "object") {
+        _ts = ts.tl;
+        continue ;
+      }
+      switch (e.TAG) {
+        case "ParagraphLine" :
+            var match = takeWhile(ts.tl, (function (t) {
+                    if (typeof t !== "object" || t.TAG !== "ParagraphLine") {
+                      return ;
+                    } else {
+                      return t._0;
+                    }
+                  }));
+            var es_0 = e._0;
+            var es_1 = match[0];
+            var es = {
+              hd: es_0,
+              tl: es_1
+            };
+            return {
+                    hd: {
+                      TAG: "Paragraph",
+                      _0: parseParagraph(Core__List.toArray(es).join(" "))
+                    },
+                    tl: groupLines(match[1])
+                  };
+        case "ListElement" :
+            var match$1 = e._0;
+            if (match$1.ordered) {
+              var match$2 = takeWhile(ts.tl, (function (t) {
+                      if (typeof t !== "object") {
+                        return ;
+                      }
+                      if (t.TAG !== "ListElement") {
+                        return ;
+                      }
+                      var match = t._0;
+                      if (match.ordered) {
+                        return match.content;
+                      }
+                      
+                    }));
+              var es_0$1 = match$1.content;
+              var es_1$1 = match$2[0];
+              var es$1 = {
+                hd: es_0$1,
+                tl: es_1$1
+              };
+              return {
+                      hd: {
+                        TAG: "List",
+                        ordered: true,
+                        content: es$1
+                      },
+                      tl: groupLines(match$2[1])
+                    };
+            }
+            var match$3 = takeWhile(ts.tl, (function (t) {
                     if (typeof t !== "object") {
                       return ;
                     }
@@ -343,72 +358,58 @@ function parseDocument(it) {
                     }
                     var match = t._0;
                     if (match.ordered) {
+                      return ;
+                    } else {
                       return match.content;
                     }
-                    
                   }));
-            var es_0$1 = match$1.content;
-            var es_1$1 = match$2[0];
-            var es$1 = {
-              hd: es_0$1,
-              tl: es_1$1
+            var es_0$2 = match$1.content;
+            var es_1$2 = match$3[0];
+            var es$2 = {
+              hd: es_0$2,
+              tl: es_1$2
             };
             return {
                     hd: {
                       TAG: "List",
-                      ordered: true,
-                      content: es$1
+                      ordered: false,
+                      content: es$2
                     },
-                    tl: groupLines(match$2[1])
+                    tl: groupLines(match$3[1])
                   };
-          }
-          var match$3 = takeWhile(ts.tl, (function (t) {
-                  if (typeof t !== "object") {
-                    return ;
-                  }
-                  if (t.TAG !== "ListElement") {
-                    return ;
-                  }
-                  var match = t._0;
-                  if (match.ordered) {
-                    return ;
-                  } else {
-                    return match.content;
-                  }
-                }));
-          var es_0$2 = match$1.content;
-          var es_1$2 = match$3[0];
-          var es$2 = {
-            hd: es_0$2,
-            tl: es_1$2
-          };
-          return {
-                  hd: {
-                    TAG: "List",
-                    ordered: false,
-                    content: es$2
-                  },
-                  tl: groupLines(match$3[1])
-                };
-      case "TableElement" :
-          var match$4 = takeWhile(ts.tl, (function (t) {
-                  if (typeof t !== "object" || t.TAG !== "TableElement") {
-                    return ;
-                  } else {
-                    return t._0;
-                  }
-                }));
-          return {
-                  hd: {
-                    TAG: "Table",
-                    _0: PervasivesU.failwith("todo")
-                  },
-                  tl: groupLines(match$4[1])
-                };
-      case "Final" :
-          return PervasivesU.failwith("todo");
-      
-    }
+        case "TableElement" :
+            var match$4 = takeWhile(ts.tl, (function (t) {
+                    if (typeof t !== "object" || t.TAG !== "TableElement") {
+                      return ;
+                    } else {
+                      return t._0;
+                    }
+                  }));
+            var es_0$3 = e._0;
+            var es_1$3 = match$4[0];
+            var es$3 = {
+              hd: es_0$3,
+              tl: es_1$3
+            };
+            return {
+                    hd: {
+                      TAG: "Table",
+                      _0: makeTable(es$3)
+                    },
+                    tl: groupLines(match$4[1])
+                  };
+        case "Final" :
+            return {
+                    hd: e._0,
+                    tl: groupLines(ts.tl)
+                  };
+        
+      }
+    };
+  };
+  var parseDocument$1 = function (lines) {
+    var lines$1 = parse(lines);
+    return groupLines(lines$1);
   };
   return parseDocument$1(Core__List.fromArray(it.split("\n")));
 }

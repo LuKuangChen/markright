@@ -3,7 +3,7 @@ open Concepts
 type list_element = {ordered: bool, content: document}
 
 type table_element =
-  | Cell({col: int, content: document})
+  | Cell(document)
   | Break
 
 type document_token =
@@ -16,7 +16,8 @@ type document_token =
 let rec takeWhile = (xs, f) => {
   switch xs {
   | list{} => (list{}, list{})
-  | list{x, ...xs} => switch f(x) {
+  | list{x, ...xs} =>
+    switch f(x) {
     | None => (list{}, list{x, ...xs})
     | Some(y) => {
         let (ys, xs) = takeWhile(xs, f)
@@ -93,7 +94,6 @@ let parseParagraph = (it: string) => {
   ->groupTokens
 }
 
-
 let parseDocument = (it: string): document => {
   let rec takeAllIndented = (indent: int, lines: list<string>) => {
     switch lines {
@@ -135,23 +135,7 @@ let parseDocument = (it: string): document => {
       } else if line->String.startsWith("| ") {
         let line = line->String.substring(~start=2, ~end=line->String.length)
         let (head, lines) = takeAllIndented(2, lines)
-        let token: document_token = TableElement(
-          Cell({col: 0, content: parseDocument(list{line, ...head})}),
-        )
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("|| ") {
-        let line = line->String.substring(~start=3, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(3, lines)
-        let token: document_token = TableElement(
-          Cell({col: 1, content: parseDocument(list{line, ...head})}),
-        )
-        list{token, ...parse(lines)}
-      } else if line->String.startsWith("||| ") {
-        let line = line->String.substring(~start=4, ~end=line->String.length)
-        let (head, lines) = takeAllIndented(4, lines)
-        let token: document_token = TableElement(
-          Cell({col: 2, content: parseDocument(list{line, ...head})}),
-        )
+        let token: document_token = TableElement(Cell(parseDocument(list{line, ...head})))
         list{token, ...parse(lines)}
       } else if line == "|-" {
         let token: document_token = TableElement(Break)
@@ -164,7 +148,20 @@ let parseDocument = (it: string): document => {
     }
   }
   and makeTable = (es: list<table_element>): list<list<document>> => {
-    failwith("todo")
+    let rec collectRows = (row, es) => {
+      switch es {
+      | list{} => {
+          let row = row->List.reverse
+          list{row}
+        }
+      | list{Cell(cell), ...es} => collectRows(list{cell, ...row}, es)
+      | list{Break, ...es} => {
+          let row = row->List.reverse
+          list{row, ...collectRows(list{}, es)}
+        }
+      }
+    }
+    collectRows(list{}, es)
   }
   and groupLines = (ts: list<document_token>): document => {
     switch ts {
@@ -199,7 +196,8 @@ let parseDocument = (it: string): document => {
         let es = list{content, ...es}
         list{List({ordered: false, content: es}), ...groupLines(ts)}
       }
-    | list{ParagraphLine(line)} => {let (es, ts) = takeWhile(ts, t => {
+    | list{ParagraphLine(line), ...ts} => {
+        let (es, ts) = takeWhile(ts, t => {
           switch t {
           | ParagraphLine(content) => Some(content)
           | _ => None
@@ -207,8 +205,9 @@ let parseDocument = (it: string): document => {
         })
         let es = list{line, ...es}
         list{Paragraph(parseParagraph(es->List.toArray->Array.join(" "))), ...groupLines(ts)}
-    }
-    | _ => failwith("todo")
+      }
+    | list{Final(block), ...ts} => list{block, ...groupLines(ts)}
+    | list{Empty, ...ts} => groupLines(ts)
     }
   }
   and parseDocument = (lines: list<string>): document => {

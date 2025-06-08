@@ -20,10 +20,7 @@ Paragraph-level format:
 # Ordered list
 > Block quote
 | Table cell
-|| Table cell at the second left column
-||| etc., etc.
 |- Table start / end / row break
-""" block interp
 ```
 
 
