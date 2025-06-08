@@ -41,9 +41,12 @@ function parseDocument(it) {
     var lines$1 = lines.tl;
     var line = lines.hd;
     if (line.startsWith("- ")) {
-      line.substring(2, line.length);
+      var line$1 = line.substring(2, line.length);
       var match = takeAllIndented(2, lines$1);
-      var token_1 = PervasivesU.failwith("todo");
+      var token_1 = parseDocument$1({
+            hd: line$1,
+            tl: match[0]
+          });
       var token = {
         TAG: "ListItem",
         ordered: false,
@@ -55,9 +58,12 @@ function parseDocument(it) {
             };
     }
     if (line.startsWith("# ")) {
-      line.substring(2, line.length);
+      var line$2 = line.substring(2, line.length);
       var match$1 = takeAllIndented(2, lines$1);
-      var token_1$1 = PervasivesU.failwith("todo");
+      var token_1$1 = parseDocument$1({
+            hd: line$2,
+            tl: match$1[0]
+          });
       var token$1 = {
         TAG: "ListItem",
         ordered: true,
@@ -69,13 +75,16 @@ function parseDocument(it) {
             };
     }
     if (line.startsWith("> ")) {
-      line.substring(2, line.length);
+      var line$3 = line.substring(2, line.length);
       var match$2 = takeAllIndented(2, lines$1);
       var token$2 = {
         TAG: "Final",
         _0: {
           TAG: "Blockquote",
-          _0: PervasivesU.failwith("todo")
+          _0: parseDocument$1({
+                hd: line$3,
+                tl: match$2[0]
+              })
         }
       };
       return {
@@ -84,9 +93,12 @@ function parseDocument(it) {
             };
     }
     if (line.startsWith("| ")) {
-      line.substring(2, line.length);
+      var line$4 = line.substring(2, line.length);
       var match$3 = takeAllIndented(2, lines$1);
-      var token_1$2 = PervasivesU.failwith("todo");
+      var token_1$2 = parseDocument$1({
+            hd: line$4,
+            tl: match$3[0]
+          });
       var token$3 = {
         TAG: "TableElement",
         col: 0,
@@ -98,9 +110,12 @@ function parseDocument(it) {
             };
     }
     if (line.startsWith("|| ")) {
-      line.substring(3, line.length);
+      var line$5 = line.substring(3, line.length);
       var match$4 = takeAllIndented(3, lines$1);
-      var token_1$3 = PervasivesU.failwith("todo");
+      var token_1$3 = parseDocument$1({
+            hd: line$5,
+            tl: match$4[0]
+          });
       var token$4 = {
         TAG: "TableElement",
         col: 1,
@@ -114,16 +129,30 @@ function parseDocument(it) {
     if (!line.startsWith("||| ")) {
       if (line === "|-") {
         return {
-                hd: "TableHLine",
+                hd: "TableBreak",
+                tl: parse(lines$1)
+              };
+      } else if (line === "") {
+        return {
+                hd: "Empty",
                 tl: parse(lines$1)
               };
       } else {
-        return PervasivesU.failwith("todo");
+        return {
+                hd: {
+                  TAG: "ParagraphLine",
+                  _0: line
+                },
+                tl: parse(lines$1)
+              };
       }
     }
-    line.substring(4, line.length);
+    var line$6 = line.substring(4, line.length);
     var match$5 = takeAllIndented(4, lines$1);
-    var token_1$4 = PervasivesU.failwith("todo");
+    var token_1$4 = parseDocument$1({
+          hd: line$6,
+          tl: match$5[0]
+        });
     var token$5 = {
       TAG: "TableElement",
       col: 2,
@@ -134,8 +163,11 @@ function parseDocument(it) {
             tl: parse(match$5[1])
           };
   };
-  Core__List.fromArray(it.split("\n"));
-  return PervasivesU.failwith("todo");
+  var parseDocument$1 = function (lines) {
+    parse(lines);
+    return PervasivesU.failwith("todo");
+  };
+  return parseDocument$1(Core__List.fromArray(it.split("\n")));
 }
 
 function parseParagraph(it) {

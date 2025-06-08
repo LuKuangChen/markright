@@ -1,9 +1,10 @@
 open Concepts
 
 type document_token = 
+    | ParagraphLine(string)
     | ListItem({ordered: bool, content: document})
     | TableElement({col: int, content: document})
-    | TableHLine
+    | TableBreak
     | Empty
     | Final(block)
 
@@ -55,16 +56,17 @@ let rec parseDocument = (it: string): document => {
         let token: document_token = TableElement({col: 2, content: parseDocument(list{line, ...head})})
         list{token, ...parse(lines)}
       } else if line == "|-" {
-        let token: document_token = TableHLine
+        let token: document_token = TableBreak
         list{token, ...parse(lines)}
       } else if line == "" {
-        list{Empty, ...parse{lines}}
+        list{Empty, ...parse(lines)}
       } else {
-        failwith("todo")
+        list{ParagraphLine(line), ...parse(lines)}
       } 
     }
   }
   and parseDocument = (lines: list<string>): document => {
+    let lines = parse(lines)
     failwith("todo")
   }
   it
