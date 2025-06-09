@@ -6,24 +6,69 @@ function pad(content) {
   return "  ".concat(content.replaceAll("\n", "\n  "));
 }
 
-var source = [
-    "- Foobar",
-    "- Hello"
-  ].join("\n");
-
-var wanted = ["<ul><li>Foobar</li><li>Hello</li></ul>"].join("");
-
-var actual = Main.documentToString(Main.parseDocument(source));
-
-if (actual !== wanted) {
-  console.log("Test \"unordered list\" failed!");
-  console.log("Wanted:");
-  console.log(pad(wanted));
-  console.log("Actual:");
-  console.log(pad(actual));
+function testTranslate(testName, source, wanted) {
+  var actual = Main.documentToString(Main.parseDocument(source));
+  if (actual !== wanted) {
+    console.log("Test \"" + testName + "\" failed!");
+    console.log("Wanted:");
+    console.log(pad(wanted));
+    console.log("Actual:");
+    console.log(pad(actual));
+    return ;
+  }
+  
 }
+
+testTranslate("Unordered list", [
+        "- Foobar",
+        "- Hello"
+      ].join("\n"), "<ul><li>Foobar</li><li>Hello</li></ul>");
+
+testTranslate("Ordered list", [
+        ". Foobar",
+        ". Hello"
+      ].join("\n"), "<ol><li>Foobar</li><li>Hello</li></ol>");
+
+testTranslate("Blockquote", [
+        "> Hello",
+        "  world!"
+      ].join("\n"), "<blockquote>Hello world!</blockquote>");
+
+testTranslate("Table", [
+        "| **Name**",
+        "| **Age**",
+        "|-",
+        "| Alice",
+        "| 19",
+        "|-",
+        "| Bob",
+        "| 18",
+        "|-",
+        "| Calvin",
+        "| 20"
+      ].join("\n"), [
+        "<table>",
+        "<tr><td><strong>Name</strong></td><td><strong>Age</strong></td></tr>",
+        "<tr><td>Alice</td><td>19</td></tr>",
+        "<tr><td>Bob</td><td>18</td></tr>",
+        "<tr><td>Calvin</td><td>20</td></tr>",
+        "</table>"
+      ].join(""));
+
+testTranslate("Paragraphs seperated by blank lines", [
+        "Hello",
+        "",
+        "World"
+      ].join("\n"), "<p>Hello</p><p>World</p>");
+
+testTranslate("Lists seperated by blank lines", [
+        "- Foobar",
+        "",
+        "- Hello"
+      ].join("\n"), "<ul><li>Foobar</li></ul><ul><li>Hello</li></ul>");
 
 export {
   pad ,
+  testTranslate ,
 }
-/* source Not a pure module */
+/*  Not a pure module */

@@ -145,14 +145,27 @@ function parseDocument(it) {
               }
             ];
     }
+    var line$1 = line.substring(indent, line.length);
     var match = takeAllIndented(indent, lines$1);
-    return [
-            {
-              hd: line.substring(indent, line.length),
-              tl: match[0]
-            },
-            match[1]
-          ];
+    var lines$2 = match[1];
+    var head = match[0];
+    if (head === /* [] */0 && line$1 === "") {
+      return [
+              /* [] */0,
+              {
+                hd: line$1,
+                tl: lines$2
+              }
+            ];
+    } else {
+      return [
+              {
+                hd: line$1,
+                tl: head
+              },
+              lines$2
+            ];
+    }
   };
   var parse = function (lines) {
     if (!lines) {

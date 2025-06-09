@@ -100,8 +100,16 @@ let parseDocument = (it: string): document => {
     | list{} => (list{}, list{})
     | list{line, ...lines} =>
       if line == "" || line->String.startsWith(String.repeat(" ", indent)) {
+        let line = line->String.substring(~start=indent, ~end=line->String.length)
         let (head, lines) = takeAllIndented(indent, lines)
-        (list{line->String.substring(~start=indent, ~end=line->String.length), ...head}, lines)
+
+        // If the last line is empty, do not consume it.
+        // This is to ensure that empty lines can be used to break lists, tables, etc.
+        if head == list{} && line == "" {
+          (list{}, list{line, ...lines})
+        } else {
+          (list{line, ...head}, lines)
+        }
       } else {
         (list{}, list{line, ...lines})
       }
