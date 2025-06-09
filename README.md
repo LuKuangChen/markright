@@ -6,12 +6,12 @@ Markright is a markdown-like language but done right. This repository describes 
 
 In-line format:
 
+- (recursive) `//` means oblique
 - (recursive) `**` means boldface
-- (recursive) `//` means italic
-- (recursive) `__` means underline
-- (recursive) `!!` means highlight
-- (atomic) ``` `` ``` means monospace
-- (atomic) `""` quotes text and interprete them (by default, interprete as monospace verbatim), where the ending quote can be followed by an interpreter name.
+- (recursive) `__` means underlined
+- (recursive) `!!` means highlighted
+- (atomic) ``` `` ``` means monospaced
+- (atomic) `""` quotes text
 
 Paragraph-level format:
 
@@ -37,9 +37,3 @@ npm install
 - Build: `npm run res:build`
 - Clean: `npm run res:clean`
 - Build & watch: `npm run res:dev`
-
-### Run
-
-```sh
-node src/Demo.res.js
-```

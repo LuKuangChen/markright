@@ -49,12 +49,12 @@ let parseParagraph = (it: string) => {
   }
   let parseRec: string => array<token> =
     (x => [Final(Plain(x))])
-    ->makeRecParser("/", Italic)
-    ->makeRecParser("*", Strong)
-    ->makeRecParser("~", Delete)
-    ->makeRecParser("!", Highlight)
-    ->makeRecParser("_", Underline)
-    ->makeRecParser("`", Monospace)
+    ->makeRecParser("/", Oblique)
+    ->makeRecParser("*", Boldface)
+    ->makeRecParser("`", Monospaced)
+    ->makeRecParser("!", Highlighted)
+    ->makeRecParser("_", Underscored)
+    ->makeRecParser("~", Strikethrough)
 
   let groupTokens = (tokens: array<token>): paragraph => {
     let rec splitAtFirst = (ts, tag) => {

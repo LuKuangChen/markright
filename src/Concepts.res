@@ -1,20 +1,20 @@
 module Tag = {
   type t =
-    | Italic
-    | Strong
-    | Delete
-    | Highlight
-    | Underline
-    | Monospace
+    | Oblique
+    | Boldface
+    | Monospaced
+    | Highlighted
+    | Underscored
+    | Strikethrough
 
   let toString = (t: t) => {
     switch t {
-    | Italic => "emph"
-    | Strong => "strong"
-    | Delete => "del"
-    | Highlight => "mark"
-    | Underline => "ins"
-    | Monospace => "code"
+    | Oblique => "emph"
+    | Boldface => "strong"
+    | Monospaced => "code"
+    | Highlighted => "mark"
+    | Underscored => "ins"
+    | Strikethrough => "del"
     }
   }
 }

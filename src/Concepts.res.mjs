@@ -3,18 +3,18 @@
 
 function toString(t) {
   switch (t) {
-    case "Italic" :
+    case "Oblique" :
         return "emph";
-    case "Strong" :
+    case "Boldface" :
         return "strong";
-    case "Delete" :
-        return "del";
-    case "Highlight" :
-        return "mark";
-    case "Underline" :
-        return "ins";
-    case "Monospace" :
+    case "Monospaced" :
         return "code";
+    case "Highlighted" :
+        return "mark";
+    case "Underscored" :
+        return "ins";
+    case "Strikethrough" :
+        return "del";
     
   }
 }

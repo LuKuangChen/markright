@@ -63,7 +63,7 @@ function parseParagraph(it) {
                                           _0: x
                                         }
                                       }];
-                            }), "/", "Italic"), "*", "Strong"), "~", "Delete"), "!", "Highlight"), "_", "Underline"), "`", "Monospace");
+                            }), "/", "Oblique"), "*", "Boldface"), "`", "Monospaced"), "!", "Highlighted"), "_", "Underscored"), "~", "Strikethrough");
   var tokens = it.split("\"\"").flatMap(function (token, i) {
         if (i % 2 === 0) {
           return parseRec(token);
