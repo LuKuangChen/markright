@@ -5,7 +5,7 @@
     "res:build": "rescript",
     "res:clean": "rescript clean",
     "res:dev": "rescript -w",
-    "test": "node test/test.res.mjs"
+    "test": "node test/Test.res.mjs"
   },
   "keywords": [
     "rescript"
