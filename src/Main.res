@@ -119,7 +119,7 @@ let parseDocument = (it: string): document => {
           content: parseDocument(list{line, ...head}),
         })
         list{token, ...parse(lines)}
-      } else if line->String.startsWith("# ") {
+      } else if line->String.startsWith(". ") {
         let line = line->String.substring(~start=2, ~end=line->String.length)
         let (head, lines) = takeAllIndented(2, lines)
         let token: document_token = ListElement({
@@ -246,5 +246,45 @@ and spanToString = span => {
       let tag = "code"
       `<${tag}>${escape(x)}</${tag}>`
     }
+  }
+}
+
+let rec blockToString = (block: block) => {
+  switch block {
+  | Paragraph(p) => `<p>${spansToString(p)}</p>`
+  | List({ordered, content}) => {
+      let tag = ordered ? "ol" : "ul"
+      let content =
+        content
+        ->List.map(documentToString)
+        ->List.map(x => `<li>${x}</li>`)
+        ->List.toArray
+        ->Array.join("")
+      `<${tag}>${content}</${tag}>`
+    }
+  | Blockquote(content) => {
+      let tag = "blockquote"
+      let content = content->documentToString
+      `<${tag}>${content}</${tag}>`
+    }
+  | Table(content) => {
+      let content = content->List.map(tableRowToString)->List.toArray->Array.join("")
+      `<table>${content}</table>`
+    }
+  | BEval(_content) => failwith("todo")
+  }
+}
+and tableRowToString = (content: list<document>) => {
+  let content = content->List.map(tableCellToString)->List.toArray->Array.join("")
+  let tag = "tr"
+  `<${tag}>${content}</${tag}>`
+}
+and tableCellToString = (content: document) => {
+  `<td>${content->documentToString}</td>`
+}
+and documentToString = (document: document) => {
+  switch document {
+  | list{Paragraph(p)} => spansToString(p)
+  | document => document->List.map(blockToString)->List.toArray->Array.join("")
   }
 }

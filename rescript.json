@@ -1,9 +1,15 @@
 {
   "name": "markright",
-  "sources": {
-    "dir": "src",
-    "subdirs": true
-  },
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    },
+    {
+      "dir": "test",
+      "subdirs": true,
+      "type": "dev"
+    }],
   "package-specs": {
     "module": "esmodule",
     "in-source": true

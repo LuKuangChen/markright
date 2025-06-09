@@ -178,7 +178,7 @@ function parseDocument(it) {
               tl: parse(match[1])
             };
     }
-    if (line.startsWith("# ")) {
+    if (line.startsWith(". ")) {
       var line$2 = line.substring(2, line.length);
       var match$1 = takeAllIndented(2, lines$1);
       var token$1 = {
@@ -436,12 +436,52 @@ function spanToString(span) {
   }
 }
 
+function blockToString(block) {
+  switch (block.TAG) {
+    case "Paragraph" :
+        return "<p>" + spansToString(block._0) + "</p>";
+    case "List" :
+        var tag = block.ordered ? "ol" : "ul";
+        var content = Core__List.toArray(Core__List.map(Core__List.map(block.content, documentToString), (function (x) {
+                      return "<li>" + x + "</li>";
+                    }))).join("");
+        return "<" + tag + ">" + content + "</" + tag + ">";
+    case "Blockquote" :
+        var tag$1 = "blockquote";
+        var content$1 = documentToString(block._0);
+        return "<" + tag$1 + ">" + content$1 + "</" + tag$1 + ">";
+    case "Table" :
+        var content$2 = Core__List.toArray(Core__List.map(block._0, tableRowToString)).join("");
+        return "<table>" + content$2 + "</table>";
+    case "BEval" :
+        return PervasivesU.failwith("todo");
+    
+  }
+}
+
+function tableRowToString(content) {
+  var content$1 = Core__List.toArray(Core__List.map(content, tableCellToString)).join("");
+  var tag = "tr";
+  return "<" + tag + ">" + content$1 + "</" + tag + ">";
+}
+
+function tableCellToString(content) {
+  return "<td>" + documentToString(content) + "</td>";
+}
+
+function documentToString($$document) {
+  if ($$document) {
+    var p = $$document.hd;
+    if (p.TAG === "Paragraph" && !$$document.tl) {
+      return spansToString(p._0);
+    }
+    
+  }
+  return Core__List.toArray(Core__List.map($$document, blockToString)).join("");
+}
+
 export {
-  takeWhile ,
-  parseParagraph ,
   parseDocument ,
-  $$escape ,
-  spansToString ,
-  spanToString ,
+  documentToString ,
 }
 /* No side effect */
