@@ -69,3 +69,14 @@ testTranslate(
   ["- Foobar", "", "- Hello"]->Array.join("\n"),
   "<ul><li>Foobar</li></ul><ul><li>Hello</li></ul>",
 )
+
+testTranslate(
+  "Nested List",
+  [
+    "- Foobar",
+    "  . A",
+    "  . B",
+    "  . C",
+    "- Barzzz"
+  ]->Array.join(""),
+  "<ol><li>Foobar</li><li>Hello</li></ol>")
