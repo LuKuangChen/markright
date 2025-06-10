@@ -9,7 +9,7 @@ module Tag = {
 
   let toString = (t: t) => {
     switch t {
-    | Oblique => "emph"
+    | Oblique => "em"
     | Boldface => "strong"
     | Monospaced => "code"
     | Highlighted => "mark"

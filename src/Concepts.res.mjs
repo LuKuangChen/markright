@@ -4,7 +4,7 @@
 function toString(t) {
   switch (t) {
     case "Oblique" :
-        return "emph";
+        return "em";
     case "Boldface" :
         return "strong";
     case "Monospaced" :
