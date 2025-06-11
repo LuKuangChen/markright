@@ -191,14 +191,14 @@ function parseDocument(it) {
               tl: parse(match[1])
             };
     }
-    if (line.startsWith("- ")) {
-      var line$2 = line.substring(2, line.length);
-      var match$1 = takeAllIndented(2, lines$1);
+    if (line.startsWith("## ")) {
+      var line$2 = line.substring(3, line.length);
+      var match$1 = takeAllIndented(3, lines$1);
       var token$1 = {
-        TAG: "ListElement",
+        TAG: "Final",
         _0: {
-          ordered: false,
-          content: parseDocument$1({
+          TAG: "Heading2",
+          _0: parseDocument$1({
                 hd: line$2,
                 tl: match$1[0]
               })
@@ -209,14 +209,14 @@ function parseDocument(it) {
               tl: parse(match$1[1])
             };
     }
-    if (line.startsWith(". ")) {
-      var line$3 = line.substring(2, line.length);
-      var match$2 = takeAllIndented(2, lines$1);
+    if (line.startsWith("### ")) {
+      var line$3 = line.substring(3, line.length);
+      var match$2 = takeAllIndented(3, lines$1);
       var token$2 = {
-        TAG: "ListElement",
+        TAG: "Final",
         _0: {
-          ordered: true,
-          content: parseDocument$1({
+          TAG: "Heading3",
+          _0: parseDocument$1({
                 hd: line$3,
                 tl: match$2[0]
               })
@@ -227,14 +227,14 @@ function parseDocument(it) {
               tl: parse(match$2[1])
             };
     }
-    if (line.startsWith("> ")) {
+    if (line.startsWith("- ")) {
       var line$4 = line.substring(2, line.length);
       var match$3 = takeAllIndented(2, lines$1);
       var token$3 = {
-        TAG: "Final",
+        TAG: "ListElement",
         _0: {
-          TAG: "Blockquote",
-          _0: parseDocument$1({
+          ordered: false,
+          content: parseDocument$1({
                 hd: line$4,
                 tl: match$3[0]
               })
@@ -243,6 +243,42 @@ function parseDocument(it) {
       return {
               hd: token$3,
               tl: parse(match$3[1])
+            };
+    }
+    if (line.startsWith(". ")) {
+      var line$5 = line.substring(2, line.length);
+      var match$4 = takeAllIndented(2, lines$1);
+      var token$4 = {
+        TAG: "ListElement",
+        _0: {
+          ordered: true,
+          content: parseDocument$1({
+                hd: line$5,
+                tl: match$4[0]
+              })
+        }
+      };
+      return {
+              hd: token$4,
+              tl: parse(match$4[1])
+            };
+    }
+    if (line.startsWith("> ")) {
+      var line$6 = line.substring(2, line.length);
+      var match$5 = takeAllIndented(2, lines$1);
+      var token$5 = {
+        TAG: "Final",
+        _0: {
+          TAG: "Blockquote",
+          _0: parseDocument$1({
+                hd: line$6,
+                tl: match$5[0]
+              })
+        }
+      };
+      return {
+              hd: token$5,
+              tl: parse(match$5[1])
             };
     }
     if (!line.startsWith("| ")) {
@@ -269,21 +305,21 @@ function parseDocument(it) {
               };
       }
     }
-    var line$5 = line.substring(2, line.length);
-    var match$4 = takeAllIndented(2, lines$1);
-    var token$4 = {
+    var line$7 = line.substring(2, line.length);
+    var match$6 = takeAllIndented(2, lines$1);
+    var token$6 = {
       TAG: "TableElement",
       _0: {
         TAG: "Cell",
         _0: parseDocument$1({
-              hd: line$5,
-              tl: match$4[0]
+              hd: line$7,
+              tl: match$6[0]
             })
       }
     };
     return {
-            hd: token$4,
-            tl: parse(match$4[1])
+            hd: token$6,
+            tl: parse(match$6[1])
           };
   };
   var makeTable = function (es) {

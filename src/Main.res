@@ -124,6 +124,16 @@ let parseDocument = (it: string): document => {
         let (head, lines) = takeAllIndented(2, lines)
         let token: document_token = Final(Heading1(parseDocument(list{line, ...head})))
         list{token, ...parse(lines)}
+      } else if line->String.startsWith("## ") {
+        let line = line->String.substring(~start=3, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(3, lines)
+        let token: document_token = Final(Heading2(parseDocument(list{line, ...head})))
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("### ") {
+        let line = line->String.substring(~start=3, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(3, lines)
+        let token: document_token = Final(Heading3(parseDocument(list{line, ...head})))
+        list{token, ...parse(lines)}
       } else if line->String.startsWith("- ") {
         let line = line->String.substring(~start=2, ~end=line->String.length)
         let (head, lines) = takeAllIndented(2, lines)
