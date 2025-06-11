@@ -63,7 +63,7 @@ function parseParagraph(it) {
                                           _0: x
                                         }
                                       }];
-                            }), "/", "Oblique"), "*", "Boldface"), "`", "Monospaced"), "!", "Highlighted"), "_", "Underscored"), "~", "Strikethrough");
+                            }), "/", "Oblique"), "*", "Boldface"), "`", "Monospaced"), "^", "Highlighted"), "_", "Underscored"), "~", "Strikethrough");
   var tokens = it.split("\"\"").flatMap(function (token, i) {
         if (i % 2 === 0) {
           return parseRec(token);
@@ -71,7 +71,7 @@ function parseParagraph(it) {
           return [{
                     TAG: "Final",
                     _0: {
-                      TAG: "SEval",
+                      TAG: "Plain",
                       _0: token
                     }
                   }];
@@ -173,14 +173,14 @@ function parseDocument(it) {
     }
     var lines$1 = lines.tl;
     var line = lines.hd;
-    if (line.startsWith("- ")) {
+    if (line.startsWith("# ")) {
       var line$1 = line.substring(2, line.length);
       var match = takeAllIndented(2, lines$1);
       var token = {
-        TAG: "ListElement",
+        TAG: "Final",
         _0: {
-          ordered: false,
-          content: parseDocument$1({
+          TAG: "Heading1",
+          _0: parseDocument$1({
                 hd: line$1,
                 tl: match[0]
               })
@@ -191,13 +191,13 @@ function parseDocument(it) {
               tl: parse(match[1])
             };
     }
-    if (line.startsWith(". ")) {
+    if (line.startsWith("- ")) {
       var line$2 = line.substring(2, line.length);
       var match$1 = takeAllIndented(2, lines$1);
       var token$1 = {
         TAG: "ListElement",
         _0: {
-          ordered: true,
+          ordered: false,
           content: parseDocument$1({
                 hd: line$2,
                 tl: match$1[0]
@@ -209,14 +209,14 @@ function parseDocument(it) {
               tl: parse(match$1[1])
             };
     }
-    if (line.startsWith("> ")) {
+    if (line.startsWith(". ")) {
       var line$3 = line.substring(2, line.length);
       var match$2 = takeAllIndented(2, lines$1);
       var token$2 = {
-        TAG: "Final",
+        TAG: "ListElement",
         _0: {
-          TAG: "Blockquote",
-          _0: parseDocument$1({
+          ordered: true,
+          content: parseDocument$1({
                 hd: line$3,
                 tl: match$2[0]
               })
@@ -225,6 +225,24 @@ function parseDocument(it) {
       return {
               hd: token$2,
               tl: parse(match$2[1])
+            };
+    }
+    if (line.startsWith("> ")) {
+      var line$4 = line.substring(2, line.length);
+      var match$3 = takeAllIndented(2, lines$1);
+      var token$3 = {
+        TAG: "Final",
+        _0: {
+          TAG: "Blockquote",
+          _0: parseDocument$1({
+                hd: line$4,
+                tl: match$3[0]
+              })
+        }
+      };
+      return {
+              hd: token$3,
+              tl: parse(match$3[1])
             };
     }
     if (!line.startsWith("| ")) {
@@ -251,21 +269,21 @@ function parseDocument(it) {
               };
       }
     }
-    var line$4 = line.substring(2, line.length);
-    var match$3 = takeAllIndented(2, lines$1);
-    var token$3 = {
+    var line$5 = line.substring(2, line.length);
+    var match$4 = takeAllIndented(2, lines$1);
+    var token$4 = {
       TAG: "TableElement",
       _0: {
         TAG: "Cell",
         _0: parseDocument$1({
-              hd: line$4,
-              tl: match$3[0]
+              hd: line$5,
+              tl: match$4[0]
             })
       }
     };
     return {
-            hd: token$3,
-            tl: parse(match$3[1])
+            hd: token$4,
+            tl: parse(match$4[1])
           };
   };
   var makeTable = function (es) {
@@ -451,6 +469,12 @@ function spanToString(span) {
 
 function blockToString(block) {
   switch (block.TAG) {
+    case "Heading1" :
+        return "<h1>" + documentToString(block._0) + "</h1>";
+    case "Heading2" :
+        return "<h2>" + documentToString(block._0) + "</h2>";
+    case "Heading3" :
+        return "<h3>" + documentToString(block._0) + "</h3>";
     case "Paragraph" :
         return "<p>" + spansToString(block._0) + "</p>";
     case "List" :

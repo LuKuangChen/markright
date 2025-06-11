@@ -52,7 +52,7 @@ let parseParagraph = (it: string) => {
     ->makeRecParser("/", Oblique)
     ->makeRecParser("*", Boldface)
     ->makeRecParser("`", Monospaced)
-    ->makeRecParser("!", Highlighted)
+    ->makeRecParser("^", Highlighted)
     ->makeRecParser("_", Underscored)
     ->makeRecParser("~", Strikethrough)
 
@@ -88,7 +88,7 @@ let parseParagraph = (it: string) => {
     if Int.mod(i, 2) == 0 {
       parseRec(token)
     } else {
-      [Final(SEval(token))]
+      [Final(Plain(token))]
     }
   })
   ->groupTokens
@@ -119,7 +119,12 @@ let parseDocument = (it: string): document => {
     switch lines {
     | list{} => list{}
     | list{line, ...lines} =>
-      if line->String.startsWith("- ") {
+      if line->String.startsWith("# ") {
+        let line = line->String.substring(~start=2, ~end=line->String.length)
+        let (head, lines) = takeAllIndented(2, lines)
+        let token: document_token = Final(Heading1(parseDocument(list{line, ...head})))
+        list{token, ...parse(lines)}
+      } else if line->String.startsWith("- ") {
         let line = line->String.substring(~start=2, ~end=line->String.length)
         let (head, lines) = takeAllIndented(2, lines)
         let token: document_token = ListElement({
@@ -259,6 +264,9 @@ and spanToString = span => {
 
 let rec blockToString = (block: block) => {
   switch block {
+  | Heading1(p) => `<h1>${documentToString(p)}</h1>`
+  | Heading2(p) => `<h2>${documentToString(p)}</h2>`
+  | Heading3(p) => `<h3>${documentToString(p)}</h3>`
   | Paragraph(p) => `<p>${spansToString(p)}</p>`
   | List({ordered, content}) => {
       let tag = ordered ? "ol" : "ul"

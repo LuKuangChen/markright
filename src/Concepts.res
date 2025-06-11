@@ -23,6 +23,9 @@ type tag = Tag.t
 type rec document = list<block>
 and paragraph = list<span>
 and block =
+  | Heading1(document)
+  | Heading2(document)
+  | Heading3(document)
   | Paragraph(paragraph)
   | List({ordered: bool, content: list<document>})
   | Blockquote(document)
