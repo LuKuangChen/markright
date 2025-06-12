@@ -404,6 +404,14 @@ function groupLines(_ts) {
   };
 }
 
+function orElse(fst, snd) {
+  if (fst !== undefined) {
+    return Caml_option.some(Caml_option.valFromOption(fst));
+  } else {
+    return snd();
+  }
+}
+
 function parseDocument(it) {
   var parse = function (lines) {
     if (!lines) {
@@ -431,97 +439,119 @@ function parseDocument(it) {
                     return subdoc(parseDocument$1(b));
                   }));
     };
-    return Core__Option.getOr(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(undefined, tryParseSubDocument("#", (function (d) {
-                                                                  return {
-                                                                          TAG: "Final",
-                                                                          _0: {
-                                                                            TAG: "Heading1",
-                                                                            _0: d
-                                                                          }
-                                                                        };
-                                                                }))), tryParseSubDocument("##", (function (d) {
-                                                              return {
-                                                                      TAG: "Final",
-                                                                      _0: {
-                                                                        TAG: "Heading2",
-                                                                        _0: d
-                                                                      }
-                                                                    };
-                                                            }))), tryParseSubDocument("###", (function (d) {
-                                                          return {
-                                                                  TAG: "Final",
-                                                                  _0: {
-                                                                    TAG: "Heading3",
-                                                                    _0: d
-                                                                  }
-                                                                };
-                                                        }))), tryParseSubDocument(">", (function (d) {
-                                                      return {
-                                                              TAG: "Final",
-                                                              _0: {
-                                                                TAG: "Heading2",
-                                                                _0: d
-                                                              }
-                                                            };
-                                                    }))), tryParseSubDocument(".", (function (d) {
-                                                  return {
-                                                          TAG: "SubDocument",
-                                                          _0: "OrderedList",
-                                                          _1: d
-                                                        };
-                                                }))), tryParseSubDocument("-", (function (d) {
-                                              return {
-                                                      TAG: "SubDocument",
-                                                      _0: "UnorderedList",
-                                                      _1: d
-                                                    };
-                                            }))), tryParseSubDocument("o", (function (d) {
-                                          return {
-                                                  TAG: "SubDocument",
-                                                  _0: {
-                                                    TAG: "CheckList",
-                                                    _0: false
-                                                  },
-                                                  _1: d
-                                                };
-                                        }))), tryParseSubDocument("x", (function (d) {
-                                      return {
-                                              TAG: "SubDocument",
-                                              _0: {
-                                                TAG: "CheckList",
-                                                _0: true
-                                              },
-                                              _1: d
-                                            };
-                                    }))), tryParseSubDocument("|", (function (d) {
-                                  return {
-                                          TAG: "SubDocument",
-                                          _0: "TableElement",
-                                          _1: d
-                                        };
-                                }))), tryParseSubDocument(".", (function (d) {
-                              return {
-                                      TAG: "SubDocument",
-                                      _0: "OrderedList",
-                                      _1: d
-                                    };
-                            }))), tryParseSubBlock("=", (function (d) {
-                          var tmp;
-                          if (d) {
-                            var x = Core__List.toArray(d.tl).join("\n");
-                            tmp = {
-                              TAG: "Embeded",
-                              _0: d.hd,
-                              _1: x
-                            };
-                          } else {
-                            tmp = PervasivesU.failwith("invalid embedding");
-                          }
-                          return {
-                                  TAG: "Final",
-                                  _0: tmp
-                                };
-                        }))), {
+    return Core__Option.getOr(orElse(orElse(orElse(orElse(orElse(orElse(orElse(orElse(orElse(orElse(orElse(undefined, (function () {
+                                                              return tryParseSubDocument("#", (function (d) {
+                                                                            return {
+                                                                                    TAG: "Final",
+                                                                                    _0: {
+                                                                                      TAG: "Heading1",
+                                                                                      _0: d
+                                                                                    }
+                                                                                  };
+                                                                          }));
+                                                            })), (function () {
+                                                          return tryParseSubDocument("##", (function (d) {
+                                                                        return {
+                                                                                TAG: "Final",
+                                                                                _0: {
+                                                                                  TAG: "Heading2",
+                                                                                  _0: d
+                                                                                }
+                                                                              };
+                                                                      }));
+                                                        })), (function () {
+                                                      return tryParseSubDocument("###", (function (d) {
+                                                                    return {
+                                                                            TAG: "Final",
+                                                                            _0: {
+                                                                              TAG: "Heading3",
+                                                                              _0: d
+                                                                            }
+                                                                          };
+                                                                  }));
+                                                    })), (function () {
+                                                  return tryParseSubDocument(">", (function (d) {
+                                                                return {
+                                                                        TAG: "Final",
+                                                                        _0: {
+                                                                          TAG: "Quotation",
+                                                                          _0: d
+                                                                        }
+                                                                      };
+                                                              }));
+                                                })), (function () {
+                                              return tryParseSubDocument(".", (function (d) {
+                                                            return {
+                                                                    TAG: "SubDocument",
+                                                                    _0: "OrderedList",
+                                                                    _1: d
+                                                                  };
+                                                          }));
+                                            })), (function () {
+                                          return tryParseSubDocument("-", (function (d) {
+                                                        return {
+                                                                TAG: "SubDocument",
+                                                                _0: "UnorderedList",
+                                                                _1: d
+                                                              };
+                                                      }));
+                                        })), (function () {
+                                      return tryParseSubDocument("o", (function (d) {
+                                                    return {
+                                                            TAG: "SubDocument",
+                                                            _0: {
+                                                              TAG: "CheckList",
+                                                              _0: false
+                                                            },
+                                                            _1: d
+                                                          };
+                                                  }));
+                                    })), (function () {
+                                  return tryParseSubDocument("x", (function (d) {
+                                                return {
+                                                        TAG: "SubDocument",
+                                                        _0: {
+                                                          TAG: "CheckList",
+                                                          _0: true
+                                                        },
+                                                        _1: d
+                                                      };
+                                              }));
+                                })), (function () {
+                              return tryParseSubDocument("|", (function (d) {
+                                            return {
+                                                    TAG: "SubDocument",
+                                                    _0: "TableElement",
+                                                    _1: d
+                                                  };
+                                          }));
+                            })), (function () {
+                          return tryParseSubDocument(".", (function (d) {
+                                        return {
+                                                TAG: "SubDocument",
+                                                _0: "OrderedList",
+                                                _1: d
+                                              };
+                                      }));
+                        })), (function () {
+                      return tryParseSubBlock("=", (function (d) {
+                                    var tmp;
+                                    if (d) {
+                                      var x = Core__List.toArray(d.tl).join("\n");
+                                      tmp = {
+                                        TAG: "Embeded",
+                                        _0: d.hd,
+                                        _1: x
+                                      };
+                                    } else {
+                                      tmp = PervasivesU.failwith("invalid embedding");
+                                    }
+                                    return {
+                                            TAG: "Final",
+                                            _0: tmp
+                                          };
+                                  }));
+                    })), {
                 hd: /^\w*$/g.test(line) ? "Empty" : (
                     "|-" === line ? "TableBreak" : ({
                           TAG: "ParagraphLine",

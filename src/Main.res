@@ -206,6 +206,13 @@ let rec groupLines = (ts: list<document_token>): document => {
   }
 }
 
+let orElse = (fst: option<'x>, snd: () => option<'x>): option<'x> => {
+  switch fst {
+    | Some(x) => Some(x)
+    | None => snd()
+  }
+}
+
 let parseDocument = (it: string): document => {
   let rec parse = (lines: list<string>): list<document_token> => {
     switch lines {
@@ -225,17 +232,17 @@ let parseDocument = (it: string): document => {
         tryParseSubBlock(mark, b => subdoc(parseDocument(b)))
       }
       None
-      ->Option.orElse(tryParseSubDocument("#", d => Final(Heading1(d))))
-      ->Option.orElse(tryParseSubDocument("##", d => Final(Heading2(d))))
-      ->Option.orElse(tryParseSubDocument("###", d => Final(Heading3(d))))
-      ->Option.orElse(tryParseSubDocument(">", d => Final(Heading2(d))))
-      ->Option.orElse(tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
-      ->Option.orElse(tryParseSubDocument("-", d => SubDocument(UnorderedList, d)))
-      ->Option.orElse(tryParseSubDocument("o", d => SubDocument(CheckList(false), d)))
-      ->Option.orElse(tryParseSubDocument("x", d => SubDocument(CheckList(true), d)))
-      ->Option.orElse(tryParseSubDocument("|", d => SubDocument(TableElement, d)))
-      ->Option.orElse(tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
-      ->Option.orElse(
+      ->orElse(() => tryParseSubDocument("#", d => Final(Heading1(d))))
+      ->orElse(() => tryParseSubDocument("##", d => Final(Heading2(d))))
+      ->orElse(() => tryParseSubDocument("###", d => Final(Heading3(d))))
+      ->orElse(() => tryParseSubDocument(">", d => Final(Quotation(d))))
+      ->orElse(() => tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
+      ->orElse(() => tryParseSubDocument("-", d => SubDocument(UnorderedList, d)))
+      ->orElse(() => tryParseSubDocument("o", d => SubDocument(CheckList(false), d)))
+      ->orElse(() => tryParseSubDocument("x", d => SubDocument(CheckList(true), d)))
+      ->orElse(() => tryParseSubDocument("|", d => SubDocument(TableElement, d)))
+      ->orElse(() => tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
+      ->orElse(() => 
         tryParseSubBlock("=", d => Final({
           switch d {
           | list{f, ...x} => {
