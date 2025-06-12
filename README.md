@@ -1,6 +1,8 @@
-# Markright
+# KC's Markright
 
-Markright is a markdown-like language but done right. This repository describes the design of Markright and provides a compiler from Markright to HTML.
+KC's Markright is a like Markdown but done right. This repository describes the design of Markright and provides a compiler from Markright to HTML.
+
+## Problem of Markdown
 
 ## Design
 
