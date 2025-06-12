@@ -31,9 +31,9 @@ and block =
   | CheckList(list<(bool, document)>)
   | Table(list<list<document>>)
   | Quotation(document)
-  | EmbededB(string)
+  | Embeded(string, string)
   | Paragraph(paragraph)
 and span =
   | Tagged(tag, list<span>)
-  | EmbededS(string)
+  | Embeded(string, string)
   | Plain(string)

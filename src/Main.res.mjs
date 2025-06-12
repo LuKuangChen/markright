@@ -70,14 +70,21 @@ function parseParagraph(it) {
   var tokens = it.split("==").flatMap(function (token, i) {
         if (i % 2 === 0) {
           return parseSpan(token);
-        } else {
+        }
+        var elements = token.split("|", 1);
+        var match = elements[0];
+        var match$1 = elements[1];
+        if (match !== undefined && match$1 !== undefined) {
           return [{
                     TAG: "Final",
                     _0: {
-                      TAG: "EmbededS",
-                      _0: token
+                      TAG: "Embeded",
+                      _0: match,
+                      _1: match$1
                     }
                   }];
+        } else {
+          return PervasivesU.failwith("invalid embeding");
         }
       });
   var splitAtFirst = function (ts, tag) {
@@ -386,7 +393,7 @@ function groupLines(_ts) {
                       tl: groupLines(match$5[1])
                     };
             }
-        case "FinalB" :
+        case "Final" :
             return {
                     hd: line._0,
                     tl: groupLines(ts.tl)
@@ -426,7 +433,7 @@ function parseDocument(it) {
     };
     return Core__Option.getOr(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(undefined, tryParseSubDocument("#", (function (d) {
                                                                   return {
-                                                                          TAG: "FinalB",
+                                                                          TAG: "Final",
                                                                           _0: {
                                                                             TAG: "Heading1",
                                                                             _0: d
@@ -434,7 +441,7 @@ function parseDocument(it) {
                                                                         };
                                                                 }))), tryParseSubDocument("##", (function (d) {
                                                               return {
-                                                                      TAG: "FinalB",
+                                                                      TAG: "Final",
                                                                       _0: {
                                                                         TAG: "Heading2",
                                                                         _0: d
@@ -442,7 +449,7 @@ function parseDocument(it) {
                                                                     };
                                                             }))), tryParseSubDocument("###", (function (d) {
                                                           return {
-                                                                  TAG: "FinalB",
+                                                                  TAG: "Final",
                                                                   _0: {
                                                                     TAG: "Heading3",
                                                                     _0: d
@@ -450,7 +457,7 @@ function parseDocument(it) {
                                                                 };
                                                         }))), tryParseSubDocument(">", (function (d) {
                                                       return {
-                                                              TAG: "FinalB",
+                                                              TAG: "Final",
                                                               _0: {
                                                                 TAG: "Heading2",
                                                                 _0: d
@@ -499,12 +506,20 @@ function parseDocument(it) {
                                       _1: d
                                     };
                             }))), tryParseSubBlock("=", (function (d) {
+                          var tmp;
+                          if (d) {
+                            var x = Core__List.toArray(d.tl).join("\n");
+                            tmp = {
+                              TAG: "Embeded",
+                              _0: d.hd,
+                              _1: x
+                            };
+                          } else {
+                            tmp = PervasivesU.failwith("invalid embedding");
+                          }
                           return {
-                                  TAG: "FinalB",
-                                  _0: {
-                                    TAG: "EmbededB",
-                                    _0: Core__List.toArray(d).join("\n")
-                                  }
+                                  TAG: "Final",
+                                  _0: tmp
                                 };
                         }))), {
                 hd: /^\w*$/g.test(line) ? "Empty" : (
@@ -523,94 +538,126 @@ function parseDocument(it) {
   return parseDocument$1(Core__List.fromArray(it.split("\n")));
 }
 
-function $$escape(x) {
-  return x.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;").replaceAll("'", "&#39;");
-}
-
-function spansToString(spans) {
-  return Core__List.toArray(Core__List.map(spans, spanToString)).join("");
-}
-
-function spanToString(span) {
-  switch (span.TAG) {
-    case "Tagged" :
-        var tag = Concepts$Markright.Tag.toString(span._0);
-        return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
-    case "EmbededS" :
-        var tag$1 = "code";
-        return "<" + tag$1 + ">" + $$escape(span._0) + "</" + tag$1 + ">";
-    case "Plain" :
-        return $$escape(span._0);
-    
+function asSpans($$document) {
+  if (!$$document) {
+    return /* [] */0;
   }
-}
-
-function blockToString(block) {
-  switch (block.TAG) {
-    case "Heading1" :
-        return "<h1>" + documentToString(block._0) + "</h1>";
-    case "Heading2" :
-        return "<h2>" + documentToString(block._0) + "</h2>";
-    case "Heading3" :
-        return "<h3>" + documentToString(block._0) + "</h3>";
-    case "OrderedList" :
-        return listToString(true, block._0);
-    case "UnorderedList" :
-        return listToString(false, block._0);
-    case "CheckList" :
-        var content = Core__List.map(block._0, (function (param) {
-                return [
-                        param[0],
-                        documentToString(param[1])
-                      ];
-              }));
-        return "<ul>" + Core__List.toArray(Core__List.map(content, (function (param) {
-                            return "<li><input type=\"checkbox\" " + (
-                                    param[0] ? "checked" : ""
-                                  ) + ">" + param[1] + "</li>";
-                          }))).join("") + "</ul>";
-    case "Table" :
-        var content$1 = Core__List.toArray(Core__List.map(block._0, tableRowToString)).join("");
-        return "<table>" + content$1 + "</table>";
-    case "Quotation" :
-        var tag = "Quotation";
-        var content$2 = documentToString(block._0);
-        return "<" + tag + ">" + content$2 + "</" + tag + ">";
-    case "EmbededB" :
-        return PervasivesU.failwith("todo");
-    case "Paragraph" :
-        return "<p>" + spansToString(block._0) + "</p>";
-    
+  var spans = $$document.hd;
+  if (spans.TAG === "Paragraph" && !$$document.tl) {
+    return spans._0;
+  } else {
+    return PervasivesU.failwith("Expecting spans");
   }
-}
-
-function listToString(ordered, content) {
-  var tag = ordered ? "ol" : "ul";
-  var content$1 = Core__List.toArray(Core__List.map(Core__List.map(content, documentToString), (function (x) {
-                return "<li>" + x + "</li>";
-              }))).join("");
-  return "<" + tag + ">" + content$1 + "</" + tag + ">";
-}
-
-function tableRowToString(content) {
-  var content$1 = Core__List.toArray(Core__List.map(content, tableCellToString)).join("");
-  var tag = "tr";
-  return "<" + tag + ">" + content$1 + "</" + tag + ">";
-}
-
-function tableCellToString(content) {
-  return "<td>" + documentToString(content) + "</td>";
 }
 
 function documentToString($$document) {
-  if ($$document) {
-    var p = $$document.hd;
-    if (p.TAG === "Paragraph" && !$$document.tl) {
-      return spansToString(p._0);
+  var evaluator = Object.fromEntries([[
+          "timestamp",
+          (function (param) {
+              var x = new Date().toISOString();
+              return {
+                      hd: {
+                        TAG: "Paragraph",
+                        _0: {
+                          hd: {
+                            TAG: "Plain",
+                            _0: x
+                          },
+                          tl: /* [] */0
+                        }
+                      },
+                      tl: /* [] */0
+                    };
+            })
+        ]]);
+  var evaluate = function (f, content) {
+    var f$1 = evaluator[f];
+    if (f$1 !== undefined) {
+      return f$1(content);
+    } else {
+      return PervasivesU.failwith("Unknown evaluator " + f);
     }
-    
-  }
-  return Core__List.toArray(Core__List.map($$document, blockToString)).join("");
+  };
+  var spansToString = function (spans) {
+    return Core__List.toArray(Core__List.map(spans, spanToString)).join("");
+  };
+  var spanToString = function (span) {
+    switch (span.TAG) {
+      case "Tagged" :
+          var tag = Concepts$Markright.Tag.toString(span._0);
+          return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
+      case "Embeded" :
+          return spansToString(asSpans(evaluate(span._0, span._1)));
+      case "Plain" :
+          var x = span._0;
+          return x.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;").replaceAll("'", "&#39;");
+      
+    }
+  };
+  var blockToString = function (block) {
+    switch (block.TAG) {
+      case "Heading1" :
+          return "<h1>" + documentToString$1(block._0) + "</h1>";
+      case "Heading2" :
+          return "<h2>" + documentToString$1(block._0) + "</h2>";
+      case "Heading3" :
+          return "<h3>" + documentToString$1(block._0) + "</h3>";
+      case "OrderedList" :
+          return listToString(true, block._0);
+      case "UnorderedList" :
+          return listToString(false, block._0);
+      case "CheckList" :
+          var content = Core__List.map(block._0, (function (param) {
+                  return [
+                          param[0],
+                          documentToString$1(param[1])
+                        ];
+                }));
+          return "<ul>" + Core__List.toArray(Core__List.map(content, (function (param) {
+                              return "<li><input type=\"checkbox\" " + (
+                                      param[0] ? "checked" : ""
+                                    ) + ">" + param[1] + "</li>";
+                            }))).join("") + "</ul>";
+      case "Table" :
+          var content$1 = Core__List.toArray(Core__List.map(block._0, tableRowToString)).join("");
+          return "<table>" + content$1 + "</table>";
+      case "Quotation" :
+          var tag = "Quotation";
+          var content$2 = documentToString$1(block._0);
+          return "<" + tag + ">" + content$2 + "</" + tag + ">";
+      case "Embeded" :
+          return documentToString$1(evaluate(block._0, block._1));
+      case "Paragraph" :
+          return "<p>" + spansToString(block._0) + "</p>";
+      
+    }
+  };
+  var listToString = function (ordered, content) {
+    var tag = ordered ? "ol" : "ul";
+    var content$1 = Core__List.toArray(Core__List.map(Core__List.map(content, documentToString$1), (function (x) {
+                  return "<li>" + x + "</li>";
+                }))).join("");
+    return "<" + tag + ">" + content$1 + "</" + tag + ">";
+  };
+  var tableRowToString = function (content) {
+    var content$1 = Core__List.toArray(Core__List.map(content, tableCellToString)).join("");
+    var tag = "tr";
+    return "<" + tag + ">" + content$1 + "</" + tag + ">";
+  };
+  var tableCellToString = function (content) {
+    return "<td>" + documentToString$1(content) + "</td>";
+  };
+  var documentToString$1 = function ($$document) {
+    if ($$document) {
+      var p = $$document.hd;
+      if (p.TAG === "Paragraph" && !$$document.tl) {
+        return spansToString(p._0);
+      }
+      
+    }
+    return Core__List.toArray(Core__List.map($$document, blockToString)).join("");
+  };
+  return documentToString$1($$document);
 }
 
 export {

@@ -11,7 +11,7 @@ type document_token =
   | SubDocument(document_modifier, document)
   | TableBreak
   | Empty
-  | FinalB(block)
+  | Final(block)
 
 let rec takeWhile = (xs, f) => {
   switch xs {
@@ -27,11 +27,11 @@ let rec takeWhile = (xs, f) => {
   }
 }
 
-type token =
+type span_token =
   | Tag(tag)
   | Final(span)
 
-let makeSpanParser = (k, delim: string, tag: tag) => (it: string): array<token> => {
+let makeSpanParser = (k, delim: string, tag: tag) => (it: string): array<span_token> => {
   it
   ->String.split(String.concat(delim, delim))
   ->Array.flatMapWithIndex((x, i) => {
@@ -47,7 +47,7 @@ let makeSpanParser = (k, delim: string, tag: tag) => (it: string): array<token> 
   })
 }
 
-let parseSpan: string => array<token> =
+let parseSpan: string => array<span_token> =
   (x => [Final(Plain(x))])
   ->makeSpanParser("/", Oblique)
   ->makeSpanParser("*", Boldface)
@@ -57,7 +57,7 @@ let parseSpan: string => array<token> =
   ->makeSpanParser("~", Strikethrough)
 
 let parseParagraph = (it: string) => {
-  let groupTokens = (tokens: array<token>): paragraph => {
+  let groupTokens = (tokens: array<span_token>): paragraph => {
     let rec splitAtFirst = (ts, tag) => {
       switch ts {
       | list{} => failwith("not found")
@@ -70,7 +70,7 @@ let parseParagraph = (it: string) => {
         }
       }
     }
-    let rec f = (ts: list<token>): list<span> => {
+    let rec f = (ts: list<span_token>): list<span> => {
       switch ts {
       | list{} => list{}
       | list{Final(x), ...ts} => list{x, ...f(ts)}
@@ -89,7 +89,11 @@ let parseParagraph = (it: string) => {
     if Int.mod(i, 2) == 0 {
       parseSpan(token)
     } else {
-      [Final(EmbededS(token))]
+      let elements = token->String.splitAtMost("|", ~limit=1)
+      switch (elements->Array.get(0), elements->Array.get(1)) {
+      | (Some(f), Some(x)) => [Final(Embeded(f, x))]
+      | _ => failwith("invalid embeding")
+      }
     }
   })
   ->groupTokens
@@ -197,7 +201,7 @@ let rec groupLines = (ts: list<document_token>): document => {
       let es = list{line, ...es}
       list{Paragraph(parseParagraph(es->List.toArray->Array.join(" "))), ...groupLines(ts)}
     }
-  | list{FinalB(block), ...ts} => list{block, ...groupLines(ts)}
+  | list{Final(block), ...ts} => list{block, ...groupLines(ts)}
   | list{Empty, ...ts} => groupLines(ts)
   }
 }
@@ -221,10 +225,10 @@ let parseDocument = (it: string): document => {
         tryParseSubBlock(mark, b => subdoc(parseDocument(b)))
       }
       None
-      ->Option.orElse(tryParseSubDocument("#", d => FinalB(Heading1(d))))
-      ->Option.orElse(tryParseSubDocument("##", d => FinalB(Heading2(d))))
-      ->Option.orElse(tryParseSubDocument("###", d => FinalB(Heading3(d))))
-      ->Option.orElse(tryParseSubDocument(">", d => FinalB(Heading2(d))))
+      ->Option.orElse(tryParseSubDocument("#", d => Final(Heading1(d))))
+      ->Option.orElse(tryParseSubDocument("##", d => Final(Heading2(d))))
+      ->Option.orElse(tryParseSubDocument("###", d => Final(Heading3(d))))
+      ->Option.orElse(tryParseSubDocument(">", d => Final(Heading2(d))))
       ->Option.orElse(tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
       ->Option.orElse(tryParseSubDocument("-", d => SubDocument(UnorderedList, d)))
       ->Option.orElse(tryParseSubDocument("o", d => SubDocument(CheckList(false), d)))
@@ -232,7 +236,15 @@ let parseDocument = (it: string): document => {
       ->Option.orElse(tryParseSubDocument("|", d => SubDocument(TableElement, d)))
       ->Option.orElse(tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
       ->Option.orElse(
-        tryParseSubBlock("=", d => FinalB(EmbededB(d->List.toArray->Array.join("\n")))),
+        tryParseSubBlock("=", d => Final({
+          switch d {
+          | list{f, ...x} => {
+              let x = x->List.toArray->Array.join("\n")
+              Embeded(f, x)
+            }
+          | _ => failwith("invalid embedding")
+          }
+        })),
       )
       ->Option.getOr(list{
         if RegExp.test(%re("/^\w*$/g"), line) {
@@ -266,23 +278,11 @@ let escape = (x: string): string => {
   ->String.replaceAll(`'`, "&#39;")
 }
 
-let rec spansToString = (spans: list<span>) => {
-  spans
-  ->List.map(spanToString)
-  ->List.toArray
-  ->Array.join("")
-}
-and spanToString = span => {
-  switch span {
-  | Tagged(tag, spans) => {
-      let tag = Tag.toString(tag)
-      `<${tag}>${spansToString(spans)}</${tag}>`
-    }
-  | Plain(x) => escape(x)
-  | EmbededS(x) => {
-      let tag = "code"
-      `<${tag}>${escape(x)}</${tag}>`
-    }
+let asSpans = (document: document): list<span> => {
+  switch document {
+    | list{} => list{}
+    | list{Paragraph(spans)} => spans
+    | _ => failwith(`Expecting spans`)
   }
 }
 
@@ -293,53 +293,90 @@ let checkListToString = (content: list<(bool, string)>): string => {
     ->Array.join("")}</ul>`
 }
 
-let rec blockToString = (block: block) => {
-  switch block {
-  | Heading1(p) => `<h1>${documentToString(p)}</h1>`
-  | Heading2(p) => `<h2>${documentToString(p)}</h2>`
-  | Heading3(p) => `<h3>${documentToString(p)}</h3>`
-  | Paragraph(p) => `<p>${spansToString(p)}</p>`
-  | OrderedList(content) => listToString(true, content)
-  | UnorderedList(content) => listToString(false, content)
-  | CheckList(content) =>
-    checkListToString(content->List.map(((checked, d)) => (checked, documentToString(d))))
-  | Quotation(content) => {
-      let tag = "Quotation"
-      let content = content->documentToString
-      `<${tag}>${content}</${tag}>`
+let documentToString = (document): string => {
+  let evaluator: dict<string => list<block>> = Dict.fromArray([
+    (
+      "timestamp",
+      _ => {
+        Js.Date.make()
+        ->Js.Date.toISOString
+        ->(x => list{Paragraph(list{Plain(x)})})
+      },
+    ),
+  ])
+  let evaluate = (f, content): document => {
+    switch evaluator->Dict.get(f) {
+    | None => failwith(`Unknown evaluator ${f}`)
+    | Some(f) => f(content)
     }
-  | Table(content) => {
-      let content = content->List.map(tableRowToString)->List.toArray->Array.join("")
-      `<table>${content}</table>`
-    }
-  | EmbededB(_content) => failwith("todo")
   }
-}
-and listToString = (ordered: bool, content: list<document>) => {
-  let tag = ordered ? "ol" : "ul"
-  let content =
-    content
-    ->List.map(documentToString)
-    ->List.map(x => `<li>${x}</li>`)
-    ->List.toArray
-    ->Array.join("")
-  `<${tag}>${content}</${tag}>`
-}
-and tableRowToString = (content: list<document>) => {
-  let content = content->List.map(tableCellToString)->List.toArray->Array.join("")
-  let tag = "tr"
-  `<${tag}>${content}</${tag}>`
-}
-and tableCellToString = (content: document) => {
-  `<td>${content->documentToString}</td>`
-}
-and documentToString = (document: document) => {
-  switch document {
-  | list{Paragraph(p)} => spansToString(p)
-  | document =>
-    document
-    ->List.map(blockToString)
+
+  let rec spansToString = (spans: list<span>) => {
+    spans
+    ->List.map(spanToString)
     ->List.toArray
     ->Array.join("")
   }
+  and spanToString = span => {
+    switch span {
+    | Tagged(tag, spans) => {
+        let tag = Tag.toString(tag)
+        `<${tag}>${spansToString(spans)}</${tag}>`
+      }
+    | Plain(x) => escape(x)
+    | Embeded(f, x) => evaluate(f, x)->asSpans->spansToString
+    }
+  }
+
+  let rec blockToString = (block: block) => {
+    switch block {
+    | Heading1(p) => `<h1>${documentToString(p)}</h1>`
+    | Heading2(p) => `<h2>${documentToString(p)}</h2>`
+    | Heading3(p) => `<h3>${documentToString(p)}</h3>`
+    | Paragraph(p) => `<p>${spansToString(p)}</p>`
+    | OrderedList(content) => listToString(true, content)
+    | UnorderedList(content) => listToString(false, content)
+    | CheckList(content) =>
+      checkListToString(content->List.map(((checked, d)) => (checked, documentToString(d))))
+    | Quotation(content) => {
+        let tag = "Quotation"
+        let content = content->documentToString
+        `<${tag}>${content}</${tag}>`
+      }
+    | Table(content) => {
+        let content = content->List.map(tableRowToString)->List.toArray->Array.join("")
+        `<table>${content}</table>`
+      }
+    | Embeded(f, content) => evaluate(f, content)->documentToString
+    }
+  }
+  and listToString = (ordered: bool, content: list<document>) => {
+    let tag = ordered ? "ol" : "ul"
+    let content =
+      content
+      ->List.map(documentToString)
+      ->List.map(x => `<li>${x}</li>`)
+      ->List.toArray
+      ->Array.join("")
+    `<${tag}>${content}</${tag}>`
+  }
+  and tableRowToString = (content: list<document>) => {
+    let content = content->List.map(tableCellToString)->List.toArray->Array.join("")
+    let tag = "tr"
+    `<${tag}>${content}</${tag}>`
+  }
+  and tableCellToString = (content: document) => {
+    `<td>${content->documentToString}</td>`
+  }
+  and documentToString = document => {
+    switch document {
+    | list{Paragraph(p)} => spansToString(p)
+    | document =>
+      document
+      ->List.map(blockToString)
+      ->List.toArray
+      ->Array.join("")
+    }
+  }
+  documentToString(document)
 }
