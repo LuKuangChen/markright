@@ -296,6 +296,7 @@ let escape = (x: string): string => {
 let asSpans = (document: document): list<span> => {
   switch document {
   | list{} => list{}
+  | list{Raw(x)} => list{Raw(x)}
   | list{Paragraph(spans)} => spans
   | _ => failwith(`Expecting spans`)
   }
@@ -391,6 +392,7 @@ let documentToString = (document): string => {
         `<table>${content}</table>`
       }
     | Embeded(f, content) => evaluate(f, content)->documentToString
+    | Raw(s) => s
     }
   }
   and listToString = (ordered: bool, content: list<document>) => {

@@ -584,11 +584,28 @@ function asSpans($$document) {
   if (!$$document) {
     return /* [] */0;
   }
-  var spans = $$document.hd;
-  if (spans.TAG === "Paragraph" && !$$document.tl) {
-    return spans._0;
-  } else {
-    return PervasivesU.failwith("Expecting spans");
+  var x = $$document.hd;
+  switch (x.TAG) {
+    case "Paragraph" :
+        if ($$document.tl) {
+          return PervasivesU.failwith("Expecting spans");
+        } else {
+          return x._0;
+        }
+    case "Raw" :
+        if ($$document.tl) {
+          return PervasivesU.failwith("Expecting spans");
+        } else {
+          return {
+                  hd: {
+                    TAG: "Raw",
+                    _0: x._0
+                  },
+                  tl: /* [] */0
+                };
+        }
+    default:
+      return PervasivesU.failwith("Expecting spans");
   }
 }
 
@@ -743,6 +760,8 @@ function documentToString($$document) {
           return documentToString$1(evaluate(block._0, block._1));
       case "Paragraph" :
           return "<p>" + spansToString(block._0) + "</p>";
+      case "Raw" :
+          return block._0;
       
     }
   };

@@ -33,6 +33,7 @@ and block =
   | Quotation(document)
   | Embeded(string, string)
   | Paragraph(paragraph)
+  | Raw(string)
 and span =
   | Tagged(tag, list<span>)
   | Embeded(string, string)
