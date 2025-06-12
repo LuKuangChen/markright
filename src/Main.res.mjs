@@ -5,6 +5,7 @@ import * as Belt_Array from "rescript/lib/es6/belt_Array.js";
 import * as Core__List from "@rescript/core/src/Core__List.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as PervasivesU from "rescript/lib/es6/pervasivesU.js";
+import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as Concepts$Markright from "./Concepts.res.mjs";
 
 function takeWhile(xs, f) {
@@ -36,42 +37,44 @@ function takeWhile(xs, f) {
         ];
 }
 
-function parseParagraph(it) {
-  var makeRecParser = function (k, delim, tag) {
-    return function (it) {
-      return it.split(delim.concat(delim)).flatMap(function (x, i) {
-                  var x$1 = k(x.replaceAll(" ".concat(delim), delim));
-                  if (i === 0) {
-                    return x$1;
-                  } else {
-                    return Belt_Array.concatMany([
-                                [{
-                                    TAG: "Tag",
-                                    _0: tag
-                                  }],
-                                x$1
-                              ]);
-                  }
-                });
-    };
+function makeSpanParser(k, delim, tag) {
+  return function (it) {
+    return it.split(delim.concat(delim)).flatMap(function (x, i) {
+                var x$1 = k(x.replaceAll(" ".concat(delim), delim));
+                if (i === 0) {
+                  return x$1;
+                } else {
+                  return Belt_Array.concatMany([
+                              [{
+                                  TAG: "Tag",
+                                  _0: tag
+                                }],
+                              x$1
+                            ]);
+                }
+              });
   };
-  var parseRec = makeRecParser(makeRecParser(makeRecParser(makeRecParser(makeRecParser(makeRecParser((function (x) {
-                              return [{
-                                        TAG: "Final",
-                                        _0: {
-                                          TAG: "Plain",
-                                          _0: x
-                                        }
-                                      }];
-                            }), "/", "Oblique"), "*", "Boldface"), "`", "Monospaced"), "^", "Highlighted"), "_", "Underscored"), "~", "Strikethrough");
-  var tokens = it.split("\"\"").flatMap(function (token, i) {
+}
+
+var parseSpan = makeSpanParser(makeSpanParser(makeSpanParser(makeSpanParser(makeSpanParser(makeSpanParser((function (x) {
+                            return [{
+                                      TAG: "Final",
+                                      _0: {
+                                        TAG: "Plain",
+                                        _0: x
+                                      }
+                                    }];
+                          }), "/", "Oblique"), "*", "Boldface"), "`", "Monospaced"), "^", "Highlighted"), "_", "Underscored"), "~", "Strikethrough");
+
+function parseParagraph(it) {
+  var tokens = it.split("==").flatMap(function (token, i) {
         if (i % 2 === 0) {
-          return parseRec(token);
+          return parseSpan(token);
         } else {
           return [{
                     TAG: "Final",
                     _0: {
-                      TAG: "Plain",
+                      TAG: "EmbededS",
                       _0: token
                     }
                   }];
@@ -126,254 +129,126 @@ function parseParagraph(it) {
   return f(Core__List.fromArray(tokens));
 }
 
-function parseDocument(it) {
-  var takeAllIndented = function (indent, lines) {
-    if (!lines) {
-      return [
-              /* [] */0,
-              /* [] */0
-            ];
-    }
-    var lines$1 = lines.tl;
-    var line = lines.hd;
-    if (!(line === "" || line.startsWith(" ".repeat(indent)))) {
-      return [
-              /* [] */0,
-              {
-                hd: line,
-                tl: lines$1
-              }
-            ];
-    }
-    var line$1 = line.substring(indent, line.length);
-    var match = takeAllIndented(indent, lines$1);
-    var lines$2 = match[1];
-    var head = match[0];
-    if (head === /* [] */0 && line$1 === "") {
-      return [
-              /* [] */0,
-              {
-                hd: line$1,
-                tl: lines$2
-              }
-            ];
-    } else {
-      return [
-              {
-                hd: line$1,
-                tl: head
-              },
-              lines$2
-            ];
-    }
-  };
-  var parse = function (lines) {
-    if (!lines) {
-      return /* [] */0;
-    }
-    var lines$1 = lines.tl;
-    var line = lines.hd;
-    if (line.startsWith("# ")) {
-      var line$1 = line.substring(2, line.length);
-      var match = takeAllIndented(2, lines$1);
-      var token = {
-        TAG: "Final",
-        _0: {
-          TAG: "Heading1",
-          _0: parseDocument$1({
-                hd: line$1,
-                tl: match[0]
-              })
-        }
-      };
-      return {
-              hd: token,
-              tl: parse(match[1])
-            };
-    }
-    if (line.startsWith("## ")) {
-      var line$2 = line.substring(3, line.length);
-      var match$1 = takeAllIndented(3, lines$1);
-      var token$1 = {
-        TAG: "Final",
-        _0: {
-          TAG: "Heading2",
-          _0: parseDocument$1({
-                hd: line$2,
-                tl: match$1[0]
-              })
-        }
-      };
-      return {
-              hd: token$1,
-              tl: parse(match$1[1])
-            };
-    }
-    if (line.startsWith("### ")) {
-      var line$3 = line.substring(3, line.length);
-      var match$2 = takeAllIndented(3, lines$1);
-      var token$2 = {
-        TAG: "Final",
-        _0: {
-          TAG: "Heading3",
-          _0: parseDocument$1({
-                hd: line$3,
-                tl: match$2[0]
-              })
-        }
-      };
-      return {
-              hd: token$2,
-              tl: parse(match$2[1])
-            };
-    }
-    if (line.startsWith("- ")) {
-      var line$4 = line.substring(2, line.length);
-      var match$3 = takeAllIndented(2, lines$1);
-      var token$3 = {
-        TAG: "ListElement",
-        _0: {
-          ordered: false,
-          content: parseDocument$1({
-                hd: line$4,
-                tl: match$3[0]
-              })
-        }
-      };
-      return {
-              hd: token$3,
-              tl: parse(match$3[1])
-            };
-    }
-    if (line.startsWith(". ")) {
-      var line$5 = line.substring(2, line.length);
-      var match$4 = takeAllIndented(2, lines$1);
-      var token$4 = {
-        TAG: "ListElement",
-        _0: {
-          ordered: true,
-          content: parseDocument$1({
-                hd: line$5,
-                tl: match$4[0]
-              })
-        }
-      };
-      return {
-              hd: token$4,
-              tl: parse(match$4[1])
-            };
-    }
-    if (line.startsWith("> ")) {
-      var line$6 = line.substring(2, line.length);
-      var match$5 = takeAllIndented(2, lines$1);
-      var token$5 = {
-        TAG: "Final",
-        _0: {
-          TAG: "Blockquote",
-          _0: parseDocument$1({
-                hd: line$6,
-                tl: match$5[0]
-              })
-        }
-      };
-      return {
-              hd: token$5,
-              tl: parse(match$5[1])
-            };
-    }
-    if (!line.startsWith("| ")) {
-      if (line === "|-") {
-        return {
-                hd: {
-                  TAG: "TableElement",
-                  _0: "Break"
-                },
-                tl: parse(lines$1)
-              };
-      } else if (line === "") {
-        return {
-                hd: "Empty",
-                tl: parse(lines$1)
-              };
-      } else {
-        return {
-                hd: {
-                  TAG: "ParagraphLine",
-                  _0: line
-                },
-                tl: parse(lines$1)
-              };
-      }
-    }
-    var line$7 = line.substring(2, line.length);
-    var match$6 = takeAllIndented(2, lines$1);
-    var token$6 = {
-      TAG: "TableElement",
-      _0: {
-        TAG: "Cell",
-        _0: parseDocument$1({
-              hd: line$7,
-              tl: match$6[0]
-            })
-      }
-    };
-    return {
-            hd: token$6,
-            tl: parse(match$6[1])
-          };
-  };
-  var makeTable = function (es) {
-    var collectRows = function (_row, _es) {
-      while(true) {
-        var es = _es;
-        var row = _row;
-        if (es) {
-          var cell = es.hd;
-          if (typeof cell !== "object") {
-            var row$1 = Core__List.reverse(row);
-            return {
-                    hd: row$1,
-                    tl: collectRows(/* [] */0, es.tl)
-                  };
-          }
+function takeAllIndented(indent, lines) {
+  if (!lines) {
+    return [
+            /* [] */0,
+            /* [] */0
+          ];
+  }
+  var lines$1 = lines.tl;
+  var line = lines.hd;
+  if (!(line === "" || line.startsWith(" ".repeat(indent)))) {
+    return [
+            /* [] */0,
+            {
+              hd: line,
+              tl: lines$1
+            }
+          ];
+  }
+  var line$1 = line.substring(indent, line.length);
+  var match = takeAllIndented(indent, lines$1);
+  var lines$2 = match[1];
+  var head = match[0];
+  if (head === /* [] */0 && line$1 === "") {
+    return [
+            /* [] */0,
+            {
+              hd: line$1,
+              tl: lines$2
+            }
+          ];
+  } else {
+    return [
+            {
+              hd: line$1,
+              tl: head
+            },
+            lines$2
+          ];
+  }
+}
+
+function makeTable(es) {
+  var collectRows = function (_row, _es) {
+    while(true) {
+      var es = _es;
+      var row = _row;
+      if (es) {
+        var cell = es.hd;
+        if (cell !== undefined) {
           _es = es.tl;
           _row = {
-            hd: cell._0,
+            hd: Caml_option.valFromOption(cell),
             tl: row
           };
           continue ;
         }
-        var row$2 = Core__List.reverse(row);
+        var row$1 = Core__List.reverse(row);
         return {
-                hd: row$2,
-                tl: /* [] */0
+                hd: row$1,
+                tl: collectRows(/* [] */0, es.tl)
               };
-      };
+      }
+      var row$2 = Core__List.reverse(row);
+      return {
+              hd: row$2,
+              tl: /* [] */0
+            };
     };
-    return collectRows(/* [] */0, es);
   };
-  var groupLines = function (_ts) {
-    while(true) {
-      var ts = _ts;
-      if (!ts) {
-        return /* [] */0;
+  return collectRows(/* [] */0, es);
+}
+
+function groupLines(_ts) {
+  while(true) {
+    var ts = _ts;
+    if (!ts) {
+      return /* [] */0;
+    }
+    var line = ts.hd;
+    if (typeof line !== "object") {
+      if (line === "TableBreak") {
+        var match = takeWhile(ts.tl, (function (t) {
+                if (typeof t !== "object") {
+                  if (t === "TableBreak") {
+                    return Caml_option.some(undefined);
+                  } else {
+                    return ;
+                  }
+                }
+                if (t.TAG !== "SubDocument") {
+                  return ;
+                }
+                var tmp = t._0;
+                if (typeof tmp !== "object" && tmp === "TableElement") {
+                  return Caml_option.some(t._1);
+                }
+                
+              }));
+        return {
+                hd: {
+                  TAG: "Table",
+                  _0: makeTable(match[0])
+                },
+                tl: groupLines(match[1])
+              };
       }
-      var e = ts.hd;
-      if (typeof e !== "object") {
-        _ts = ts.tl;
-        continue ;
-      }
-      switch (e.TAG) {
+      _ts = ts.tl;
+      continue ;
+    } else {
+      switch (line.TAG) {
         case "ParagraphLine" :
-            var match = takeWhile(ts.tl, (function (t) {
+            var match$1 = takeWhile(ts.tl, (function (t) {
                     if (typeof t !== "object" || t.TAG !== "ParagraphLine") {
                       return ;
                     } else {
                       return t._0;
                     }
                   }));
-            var es_0 = e._0;
-            var es_1 = match[0];
+            var es_0 = line._0;
+            var es_1 = match$1[0];
             var es = {
               hd: es_0,
               tl: es_1
@@ -383,96 +258,263 @@ function parseDocument(it) {
                       TAG: "Paragraph",
                       _0: parseParagraph(Core__List.toArray(es).join(" "))
                     },
-                    tl: groupLines(match[1])
+                    tl: groupLines(match$1[1])
                   };
-        case "ListElement" :
-            var match$1 = e._0;
-            if (match$1.ordered) {
-              var match$2 = takeWhile(ts.tl, (function (t) {
+        case "SubDocument" :
+            var checked = line._0;
+            if (typeof checked !== "object") {
+              switch (checked) {
+                case "OrderedList" :
+                    var match$2 = takeWhile(ts.tl, (function (t) {
+                            if (typeof t !== "object") {
+                              return ;
+                            }
+                            if (t.TAG !== "SubDocument") {
+                              return ;
+                            }
+                            var tmp = t._0;
+                            if (typeof tmp !== "object" && tmp === "OrderedList") {
+                              return t._1;
+                            }
+                            
+                          }));
+                    var es_0$1 = line._1;
+                    var es_1$1 = match$2[0];
+                    var es$1 = {
+                      hd: es_0$1,
+                      tl: es_1$1
+                    };
+                    return {
+                            hd: {
+                              TAG: "OrderedList",
+                              _0: es$1
+                            },
+                            tl: groupLines(match$2[1])
+                          };
+                case "UnorderedList" :
+                    var match$3 = takeWhile(ts.tl, (function (t) {
+                            if (typeof t !== "object") {
+                              return ;
+                            }
+                            if (t.TAG !== "SubDocument") {
+                              return ;
+                            }
+                            var tmp = t._0;
+                            if (typeof tmp !== "object" && tmp === "UnorderedList") {
+                              return t._1;
+                            }
+                            
+                          }));
+                    var es_0$2 = line._1;
+                    var es_1$2 = match$3[0];
+                    var es$2 = {
+                      hd: es_0$2,
+                      tl: es_1$2
+                    };
+                    return {
+                            hd: {
+                              TAG: "UnorderedList",
+                              _0: es$2
+                            },
+                            tl: groupLines(match$3[1])
+                          };
+                case "TableElement" :
+                    var match$4 = takeWhile(ts.tl, (function (t) {
+                            if (typeof t !== "object") {
+                              if (t === "TableBreak") {
+                                return Caml_option.some(undefined);
+                              } else {
+                                return ;
+                              }
+                            }
+                            if (t.TAG !== "SubDocument") {
+                              return ;
+                            }
+                            var tmp = t._0;
+                            if (typeof tmp !== "object" && tmp === "TableElement") {
+                              return Caml_option.some(t._1);
+                            }
+                            
+                          }));
+                    var es_0$3 = line._1;
+                    var es_1$3 = match$4[0];
+                    var es$3 = {
+                      hd: es_0$3,
+                      tl: es_1$3
+                    };
+                    return {
+                            hd: {
+                              TAG: "Table",
+                              _0: makeTable(es$3)
+                            },
+                            tl: groupLines(match$4[1])
+                          };
+                
+              }
+            } else {
+              var match$5 = takeWhile(ts.tl, (function (t) {
                       if (typeof t !== "object") {
                         return ;
                       }
-                      if (t.TAG !== "ListElement") {
+                      if (t.TAG !== "SubDocument") {
                         return ;
                       }
-                      var match = t._0;
-                      if (match.ordered) {
-                        return match.content;
+                      var checked = t._0;
+                      if (typeof checked !== "object") {
+                        return ;
+                      } else {
+                        return [
+                                checked._0,
+                                t._1
+                              ];
                       }
-                      
                     }));
-              var es_0$1 = match$1.content;
-              var es_1$1 = match$2[0];
-              var es$1 = {
-                hd: es_0$1,
-                tl: es_1$1
+              var es_0$4 = [
+                checked._0,
+                line._1
+              ];
+              var es_1$4 = match$5[0];
+              var es$4 = {
+                hd: es_0$4,
+                tl: es_1$4
               };
               return {
                       hd: {
-                        TAG: "List",
-                        ordered: true,
-                        content: es$1
+                        TAG: "CheckList",
+                        _0: es$4
                       },
-                      tl: groupLines(match$2[1])
+                      tl: groupLines(match$5[1])
                     };
             }
-            var match$3 = takeWhile(ts.tl, (function (t) {
-                    if (typeof t !== "object") {
-                      return ;
-                    }
-                    if (t.TAG !== "ListElement") {
-                      return ;
-                    }
-                    var match = t._0;
-                    if (match.ordered) {
-                      return ;
-                    } else {
-                      return match.content;
-                    }
-                  }));
-            var es_0$2 = match$1.content;
-            var es_1$2 = match$3[0];
-            var es$2 = {
-              hd: es_0$2,
-              tl: es_1$2
-            };
+        case "FinalB" :
             return {
-                    hd: {
-                      TAG: "List",
-                      ordered: false,
-                      content: es$2
-                    },
-                    tl: groupLines(match$3[1])
-                  };
-        case "TableElement" :
-            var match$4 = takeWhile(ts.tl, (function (t) {
-                    if (typeof t !== "object" || t.TAG !== "TableElement") {
-                      return ;
-                    } else {
-                      return t._0;
-                    }
-                  }));
-            var es_0$3 = e._0;
-            var es_1$3 = match$4[0];
-            var es$3 = {
-              hd: es_0$3,
-              tl: es_1$3
-            };
-            return {
-                    hd: {
-                      TAG: "Table",
-                      _0: makeTable(es$3)
-                    },
-                    tl: groupLines(match$4[1])
-                  };
-        case "Final" :
-            return {
-                    hd: e._0,
+                    hd: line._0,
                     tl: groupLines(ts.tl)
                   };
         
       }
+    }
+  };
+}
+
+function parseDocument(it) {
+  var parse = function (lines) {
+    if (!lines) {
+      return /* [] */0;
+    }
+    var lines$1 = lines.tl;
+    var line = lines.hd;
+    var tryParseSubBlock = function (mark, subblock) {
+      if (!line.startsWith(mark.concat(" "))) {
+        return ;
+      }
+      var line$1 = line.substring(2, line.length);
+      var match = takeAllIndented(2, lines$1);
+      var token = subblock({
+            hd: line$1,
+            tl: match[0]
+          });
+      return {
+              hd: token,
+              tl: parse(match[1])
+            };
     };
+    var tryParseSubDocument = function (mark, subdoc) {
+      return tryParseSubBlock(mark, (function (b) {
+                    return subdoc(parseDocument$1(b));
+                  }));
+    };
+    return Core__Option.getOr(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(Core__Option.orElse(undefined, tryParseSubDocument("#", (function (d) {
+                                                                  return {
+                                                                          TAG: "FinalB",
+                                                                          _0: {
+                                                                            TAG: "Heading1",
+                                                                            _0: d
+                                                                          }
+                                                                        };
+                                                                }))), tryParseSubDocument("##", (function (d) {
+                                                              return {
+                                                                      TAG: "FinalB",
+                                                                      _0: {
+                                                                        TAG: "Heading2",
+                                                                        _0: d
+                                                                      }
+                                                                    };
+                                                            }))), tryParseSubDocument("###", (function (d) {
+                                                          return {
+                                                                  TAG: "FinalB",
+                                                                  _0: {
+                                                                    TAG: "Heading3",
+                                                                    _0: d
+                                                                  }
+                                                                };
+                                                        }))), tryParseSubDocument(">", (function (d) {
+                                                      return {
+                                                              TAG: "FinalB",
+                                                              _0: {
+                                                                TAG: "Heading2",
+                                                                _0: d
+                                                              }
+                                                            };
+                                                    }))), tryParseSubDocument(".", (function (d) {
+                                                  return {
+                                                          TAG: "SubDocument",
+                                                          _0: "OrderedList",
+                                                          _1: d
+                                                        };
+                                                }))), tryParseSubDocument("-", (function (d) {
+                                              return {
+                                                      TAG: "SubDocument",
+                                                      _0: "UnorderedList",
+                                                      _1: d
+                                                    };
+                                            }))), tryParseSubDocument("o", (function (d) {
+                                          return {
+                                                  TAG: "SubDocument",
+                                                  _0: {
+                                                    TAG: "CheckList",
+                                                    _0: false
+                                                  },
+                                                  _1: d
+                                                };
+                                        }))), tryParseSubDocument("x", (function (d) {
+                                      return {
+                                              TAG: "SubDocument",
+                                              _0: {
+                                                TAG: "CheckList",
+                                                _0: true
+                                              },
+                                              _1: d
+                                            };
+                                    }))), tryParseSubDocument("|", (function (d) {
+                                  return {
+                                          TAG: "SubDocument",
+                                          _0: "TableElement",
+                                          _1: d
+                                        };
+                                }))), tryParseSubDocument(".", (function (d) {
+                              return {
+                                      TAG: "SubDocument",
+                                      _0: "OrderedList",
+                                      _1: d
+                                    };
+                            }))), tryParseSubBlock("=", (function (d) {
+                          return {
+                                  TAG: "FinalB",
+                                  _0: {
+                                    TAG: "EmbededB",
+                                    _0: Core__List.toArray(d).join("\n")
+                                  }
+                                };
+                        }))), {
+                hd: /^\w*$/g.test(line) ? "Empty" : (
+                    "|-" === line ? "TableBreak" : ({
+                          TAG: "ParagraphLine",
+                          _0: line
+                        })
+                  ),
+                tl: parse(lines$1)
+              });
   };
   var parseDocument$1 = function (lines) {
     var lines$1 = parse(lines);
@@ -494,7 +536,7 @@ function spanToString(span) {
     case "Tagged" :
         var tag = Concepts$Markright.Tag.toString(span._0);
         return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
-    case "SEval" :
+    case "EmbededS" :
         var tag$1 = "code";
         return "<" + tag$1 + ">" + $$escape(span._0) + "</" + tag$1 + ">";
     case "Plain" :
@@ -511,25 +553,43 @@ function blockToString(block) {
         return "<h2>" + documentToString(block._0) + "</h2>";
     case "Heading3" :
         return "<h3>" + documentToString(block._0) + "</h3>";
+    case "OrderedList" :
+        return listToString(true, block._0);
+    case "UnorderedList" :
+        return listToString(false, block._0);
+    case "CheckList" :
+        var content = Core__List.map(block._0, (function (param) {
+                return [
+                        param[0],
+                        documentToString(param[1])
+                      ];
+              }));
+        return "<ul>" + Core__List.toArray(Core__List.map(content, (function (param) {
+                            return "<li><input type=\"checkbox\" " + (
+                                    param[0] ? "checked" : ""
+                                  ) + ">" + param[1] + "</li>";
+                          }))).join("") + "</ul>";
+    case "Table" :
+        var content$1 = Core__List.toArray(Core__List.map(block._0, tableRowToString)).join("");
+        return "<table>" + content$1 + "</table>";
+    case "Quotation" :
+        var tag = "Quotation";
+        var content$2 = documentToString(block._0);
+        return "<" + tag + ">" + content$2 + "</" + tag + ">";
+    case "EmbededB" :
+        return PervasivesU.failwith("todo");
     case "Paragraph" :
         return "<p>" + spansToString(block._0) + "</p>";
-    case "List" :
-        var tag = block.ordered ? "ol" : "ul";
-        var content = Core__List.toArray(Core__List.map(Core__List.map(block.content, documentToString), (function (x) {
-                      return "<li>" + x + "</li>";
-                    }))).join("");
-        return "<" + tag + ">" + content + "</" + tag + ">";
-    case "Blockquote" :
-        var tag$1 = "blockquote";
-        var content$1 = documentToString(block._0);
-        return "<" + tag$1 + ">" + content$1 + "</" + tag$1 + ">";
-    case "Table" :
-        var content$2 = Core__List.toArray(Core__List.map(block._0, tableRowToString)).join("");
-        return "<table>" + content$2 + "</table>";
-    case "BEval" :
-        return PervasivesU.failwith("todo");
     
   }
+}
+
+function listToString(ordered, content) {
+  var tag = ordered ? "ol" : "ul";
+  var content$1 = Core__List.toArray(Core__List.map(Core__List.map(content, documentToString), (function (x) {
+                return "<li>" + x + "</li>";
+              }))).join("");
+  return "<" + tag + ">" + content$1 + "</" + tag + ">";
 }
 
 function tableRowToString(content) {
@@ -557,4 +617,4 @@ export {
   parseDocument ,
   documentToString ,
 }
-/* No side effect */
+/* parseSpan Not a pure module */

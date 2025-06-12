@@ -30,17 +30,17 @@ A **document** is a list of *blocks*.
 
 A **block** is one of the following
 
-| Meaning         | Notation       | Content          |
-| ---------------:| -------------- | ---------------- |
-| Heading         | Starts w/ `#`s | Document         |
-| Ordered List    | Starts w/ `.`  | Document         |
-| Unordered List  | Starts w/ `-`  | Document         |
-| Checked List    | Starts w/ `x`  | Document         |
-| Unchecked List  | Starts w/ `o`  | Document         |
-| Table Element   | Starts w/ `\|` | Document or `-`s |
-| Quotation       | Starts w/ `>`  | Document         |
+|         Meaning | Notation       | Content          |
+| --------------: | -------------- | ---------------- |
+|         Heading | Starts w/ `#`s | Document         |
+|       Quotation | Starts w/ `>`  | Document         |
+|    Ordered List | Starts w/ `.`  | Document         |
+|  Unordered List | Starts w/ `-`  | Document         |
+|    Checked List | Starts w/ `x`  | Document         |
+|  Unchecked List | Starts w/ `o`  | Document         |
+|   Table Element | Starts w/ `\|` | Document or `-`s |
 | Embeded Content | Starts w/ `=`  | Any              |
-| Paragraph       | Otherwise      | Spans            |
+|       Paragraph | Otherwise      | Spans            |
 
 A few notes on the table:
 
@@ -54,9 +54,10 @@ A **span** is one of the following
 | --------------- | ------------------ | ------- |
 | Oblique         | Wrap w/ `//`       | Spans   |
 | Boldface        | Wrap w/ `**`       | Spans   |
-| Underlined      | Wrap w/ `__`       | Spans   |
-| Highlighted     | Wrap w/ `^^`       | Spans   |
 | Monospaced      | Wrap w/ ``` `` ``` | Spans   |
+| Highlighted     | Wrap w/ `^^`       | Spans   |
+| Underscored     | Wrap w/ `__`       | Spans   |
+| Strikethrough   | Wrap w/ `~~`       | Spans   |
 | Embeded Content | Wrap w/ ```==```   | Any     |
 
 An embeded content must specify how to process its content.
