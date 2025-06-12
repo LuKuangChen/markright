@@ -37,3 +37,4 @@ and span =
   | Tagged(tag, list<span>)
   | Embeded(string, string)
   | Plain(string)
+  | Raw(string)

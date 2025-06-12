@@ -89,10 +89,11 @@ let parseParagraph = (it: string) => {
     if Int.mod(i, 2) == 0 {
       parseSpan(token)
     } else {
-      let elements = token->String.splitAtMost("|", ~limit=1)
+      let elements = token->String.splitAtMost("|", ~limit=2)
       switch (elements->Array.get(0), elements->Array.get(1)) {
       | (Some(f), Some(x)) => [Final(Embeded(f, x))]
-      | _ => failwith("invalid embeding")
+      | (Some(f), None) => [Final(Embeded(f, ""))]
+      | _ => failwith(`invalid embeding: ${token}`)
       }
     }
   })
@@ -227,7 +228,8 @@ let parseDocument = (it: string): document => {
     | list{line, ...lines} =>
       let tryParseSubBlock = (mark, subblock: list<string> => document_token) => {
         if line->String.startsWith(mark->String.concat(" ")) {
-          let line = line->String.substring(~start=2, ~end=line->String.length)
+          let line =
+            line->String.substring(~start=1 + mark->String.length, ~end=line->String.length)
           let (head, lines) = takeAllIndented(2, lines)
           let block = list{line, ...head}
           let token: document_token = subblock(block)
@@ -306,21 +308,48 @@ let checkListToString = (content: list<(bool, string)>): string => {
     ->Array.join("")}</ul>`
 }
 
+let evaluator: dict<(string, document) => list<block>> = Dict.fromArray([
+  ("raw", (content, _) => list{Paragraph(list{Raw(content)})}),
+  (
+    "now",
+    (_content, _document) => {
+      Js.Date.make()
+      ->Js.Date.toISOString
+      ->(x => list{Paragraph(list{Plain(x)})})
+    },
+  ),
+  (
+    "toc",
+    (_, document) => {
+      list{
+        OrderedList(
+          document->List.mapWithIndex((b, i) => {
+            switch b {
+            | Heading2(d) => {
+              let rec subsectionsOf = (bs) => {
+                switch bs {
+                  | list{} => list{}
+                  | list{Heading2(_), ..._} => list{}
+                  | list{Heading3(d), ...bs} => list{d, ...subsectionsOf(bs)}
+                  | list{_, ...bs} => subsectionsOf(bs)
+                }
+              }
+              Some(list{...d, OrderedList(subsectionsOf(document->List.drop(i+1)->Option.getOr(list{})))})
+            }
+            | _ => None
+            }
+          })->List.filterMap(v => v),
+        ),
+      }
+    },
+  ),
+])
+
 let documentToString = (document): string => {
-  let evaluator: dict<string => list<block>> = Dict.fromArray([
-    (
-      "timestamp",
-      _ => {
-        Js.Date.make()
-        ->Js.Date.toISOString
-        ->(x => list{Paragraph(list{Plain(x)})})
-      },
-    ),
-  ])
   let evaluate = (f, content): document => {
     switch evaluator->Dict.get(f) {
     | None => failwith(`Unknown evaluator ${f}`)
-    | Some(f) => f(content)
+    | Some(f) => f(content, document)
     }
   }
 
@@ -336,6 +365,7 @@ let documentToString = (document): string => {
         let tag = Tag.toString(tag)
         `<${tag}>${spansToString(spans)}</${tag}>`
       }
+    | Raw(x) => x
     | Plain(x) => escape(x)
     | Embeded(f, x) => evaluate(f, x)->asSpans->spansToString
     }

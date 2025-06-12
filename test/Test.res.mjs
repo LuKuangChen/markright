@@ -38,13 +38,13 @@ function runTests(tests) {
   tests.forEach(function (test) {
         test(report);
       });
-  if (totalTest.contents >= 0) {
+  if (failedTests.length > 0) {
     console.log("Failed " + failedTests.length.toString() + " out of " + totalTest.contents.toString() + " tests:");
     failedTests.forEach(function (testName) {
           console.log("- " + testName);
         });
   } else {
-    console.log("All tests passed!");
+    console.log("All " + totalTest.contents.toString() + " test(s) passed!");
   }
 }
 
@@ -103,7 +103,14 @@ runTests([
               "  . B",
               "  . C",
               "- Barzzz"
-            ].join("\n"), "<ul><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ul>")
+            ].join("\n"), "<ul><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ul>"),
+      testTranslate("TOC", [
+              "= toc",
+              "## Sec1",
+              "foobar",
+              "### Subsec 1.1",
+              "## Sec 2"
+            ].join("\n"), "<ol><li><p>Sec1</p><ol><li>Subsec 1.1</li></ol></li><li><p>Sec 2</p><ol></ol></li></ol><h2>Sec1</h2><p>foobar</p><h3>Subsec 1.1</h3><h2>Sec 2</h2>")
     ]);
 
 export {
