@@ -206,10 +206,17 @@ let rec groupLines = (ts: list<document_token>): document => {
   }
 }
 
-let orElse = (fst: option<'x>, snd: () => option<'x>): option<'x> => {
+let orElse = (fst: option<'x>, snd: unit => option<'x>): option<'x> => {
   switch fst {
-    | Some(x) => Some(x)
-    | None => snd()
+  | Some(x) => Some(x)
+  | None => snd()
+  }
+}
+
+let orFinal = (fst: option<'x>, snd: unit => 'x): 'x => {
+  switch fst {
+  | Some(x) => x
+  | None => snd()
   }
 }
 
@@ -222,7 +229,8 @@ let parseDocument = (it: string): document => {
         if line->String.startsWith(mark->String.concat(" ")) {
           let line = line->String.substring(~start=2, ~end=line->String.length)
           let (head, lines) = takeAllIndented(2, lines)
-          let token: document_token = subblock(list{line, ...head})
+          let block = list{line, ...head}
+          let token: document_token = subblock(block)
           Some(list{token, ...parse(lines)})
         } else {
           None
@@ -231,8 +239,7 @@ let parseDocument = (it: string): document => {
       let tryParseSubDocument = (mark, subdoc: document => document_token) => {
         tryParseSubBlock(mark, b => subdoc(parseDocument(b)))
       }
-      None
-      ->orElse(() => tryParseSubDocument("#", d => Final(Heading1(d))))
+      tryParseSubDocument("#", d => Final(Heading1(d)))
       ->orElse(() => tryParseSubDocument("##", d => Final(Heading2(d))))
       ->orElse(() => tryParseSubDocument("###", d => Final(Heading3(d))))
       ->orElse(() => tryParseSubDocument(">", d => Final(Quotation(d))))
@@ -241,8 +248,7 @@ let parseDocument = (it: string): document => {
       ->orElse(() => tryParseSubDocument("o", d => SubDocument(CheckList(false), d)))
       ->orElse(() => tryParseSubDocument("x", d => SubDocument(CheckList(true), d)))
       ->orElse(() => tryParseSubDocument("|", d => SubDocument(TableElement, d)))
-      ->orElse(() => tryParseSubDocument(".", d => SubDocument(OrderedList, d)))
-      ->orElse(() => 
+      ->orElse(() =>
         tryParseSubBlock("=", d => Final({
           switch d {
           | list{f, ...x} => {
@@ -251,10 +257,10 @@ let parseDocument = (it: string): document => {
             }
           | _ => failwith("invalid embedding")
           }
-        })),
+        }))
       )
-      ->Option.getOr(list{
-        if RegExp.test(%re("/^\w*$/g"), line) {
+      ->orFinal(() => list{
+        if RegExp.test(%re("/^\s*$/g"), line) {
           Empty
         } else if "|-" == line {
           TableBreak
@@ -287,9 +293,9 @@ let escape = (x: string): string => {
 
 let asSpans = (document: document): list<span> => {
   switch document {
-    | list{} => list{}
-    | list{Paragraph(spans)} => spans
-    | _ => failwith(`Expecting spans`)
+  | list{} => list{}
+  | list{Paragraph(spans)} => spans
+  | _ => failwith(`Expecting spans`)
   }
 }
 
@@ -346,7 +352,7 @@ let documentToString = (document): string => {
     | CheckList(content) =>
       checkListToString(content->List.map(((checked, d)) => (checked, documentToString(d))))
     | Quotation(content) => {
-        let tag = "Quotation"
+        let tag = "blockquote"
         let content = content->documentToString
         `<${tag}>${content}</${tag}>`
       }

@@ -93,6 +93,6 @@ runTests([
   testTranslate(
     "Nested list",
     ["- Foobar", "  . A", "  . B", "  . C", "- Barzzz"]->Array.join("\n"),
-    "<ol><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ol>",
+    "<ul><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ul>",
   ),
 ])

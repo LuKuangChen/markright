@@ -103,7 +103,7 @@ runTests([
               "  . B",
               "  . C",
               "- Barzzz"
-            ].join("\n"), "<ol><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ol>")
+            ].join("\n"), "<ul><li><p>Foobar</p><ol><li>A</li><li>B</li><li>C</li></ol></li><li>Barzzz</li></ul>")
     ]);
 
 export {
