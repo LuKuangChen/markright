@@ -698,9 +698,10 @@ var evaluator = Object.fromEntries([
       ]
     ]);
 
-function documentToString($$document) {
+function toHTMLString($$document, extensionsOpt) {
+  var extensions = extensionsOpt !== undefined ? extensionsOpt : ({});
   var evaluate = function (f, content) {
-    var f$1 = evaluator[f];
+    var f$1 = Core__Option.orElse(extensions[f], evaluator[f]);
     if (f$1 !== undefined) {
       return f$1(content, $$document);
     } else {
@@ -728,11 +729,11 @@ function documentToString($$document) {
   var blockToString = function (block) {
     switch (block.TAG) {
       case "Heading1" :
-          return "<h1>" + documentToString$1(block._0) + "</h1>";
+          return "<h1>" + documentToString(block._0) + "</h1>";
       case "Heading2" :
-          return "<h2>" + documentToString$1(block._0) + "</h2>";
+          return "<h2>" + documentToString(block._0) + "</h2>";
       case "Heading3" :
-          return "<h3>" + documentToString$1(block._0) + "</h3>";
+          return "<h3>" + documentToString(block._0) + "</h3>";
       case "OrderedList" :
           return listToString(true, block._0);
       case "UnorderedList" :
@@ -741,7 +742,7 @@ function documentToString($$document) {
           var content = Core__List.map(block._0, (function (param) {
                   return [
                           param[0],
-                          documentToString$1(param[1])
+                          documentToString(param[1])
                         ];
                 }));
           return "<ul>" + Core__List.toArray(Core__List.map(content, (function (param) {
@@ -754,10 +755,10 @@ function documentToString($$document) {
           return "<table>" + content$1 + "</table>";
       case "Quotation" :
           var tag = "blockquote";
-          var content$2 = documentToString$1(block._0);
+          var content$2 = documentToString(block._0);
           return "<" + tag + ">" + content$2 + "</" + tag + ">";
       case "Embeded" :
-          return documentToString$1(evaluate(block._0, block._1));
+          return documentToString(evaluate(block._0, block._1));
       case "Paragraph" :
           return "<p>" + spansToString(block._0) + "</p>";
       case "Raw" :
@@ -767,7 +768,7 @@ function documentToString($$document) {
   };
   var listToString = function (ordered, content) {
     var tag = ordered ? "ol" : "ul";
-    var content$1 = Core__List.toArray(Core__List.map(Core__List.map(content, documentToString$1), (function (x) {
+    var content$1 = Core__List.toArray(Core__List.map(Core__List.map(content, documentToString), (function (x) {
                   return "<li>" + x + "</li>";
                 }))).join("");
     return "<" + tag + ">" + content$1 + "</" + tag + ">";
@@ -778,9 +779,9 @@ function documentToString($$document) {
     return "<" + tag + ">" + content$1 + "</" + tag + ">";
   };
   var tableCellToString = function (content) {
-    return "<td>" + documentToString$1(content) + "</td>";
+    return "<td>" + documentToString(content) + "</td>";
   };
-  var documentToString$1 = function ($$document) {
+  var documentToString = function ($$document) {
     if ($$document) {
       var p = $$document.hd;
       if (p.TAG === "Paragraph" && !$$document.tl) {
@@ -790,11 +791,11 @@ function documentToString($$document) {
     }
     return Core__List.toArray(Core__List.map($$document, blockToString)).join("");
   };
-  return documentToString$1($$document);
+  return documentToString($$document);
 }
 
 export {
   parseDocument ,
-  documentToString ,
+  toHTMLString ,
 }
 /* parseSpan Not a pure module */

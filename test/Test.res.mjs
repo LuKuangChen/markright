@@ -50,7 +50,7 @@ function runTests(tests) {
 
 function testTranslate(testName, source, wanted) {
   return makeTest(testName, (function () {
-                return Main$Markright.documentToString(Main$Markright.parseDocument(source));
+                return Main$Markright.toHTMLString(Main$Markright.parseDocument(source), undefined);
               }), wanted);
 }
 

@@ -309,7 +309,9 @@ let checkListToString = (content: list<(bool, string)>): string => {
     ->Array.join("")}</ul>`
 }
 
-let evaluator: dict<(string, document) => list<block>> = Dict.fromArray([
+type extension = (string, document) => list<block>
+
+let evaluator: dict<extension> = Dict.fromArray([
   ("raw", (content, _) => list{Paragraph(list{Raw(content)})}),
   (
     "now",
@@ -324,31 +326,38 @@ let evaluator: dict<(string, document) => list<block>> = Dict.fromArray([
     (_, document) => {
       list{
         OrderedList(
-          document->List.mapWithIndex((b, i) => {
+          document
+          ->List.mapWithIndex((b, i) => {
             switch b {
             | Heading2(d) => {
-              let rec subsectionsOf = (bs) => {
-                switch bs {
+                let rec subsectionsOf = bs => {
+                  switch bs {
                   | list{} => list{}
                   | list{Heading2(_), ..._} => list{}
                   | list{Heading3(d), ...bs} => list{d, ...subsectionsOf(bs)}
                   | list{_, ...bs} => subsectionsOf(bs)
+                  }
                 }
+                Some(
+                  list{
+                    ...d,
+                    OrderedList(subsectionsOf(document->List.drop(i + 1)->Option.getOr(list{}))),
+                  },
+                )
               }
-              Some(list{...d, OrderedList(subsectionsOf(document->List.drop(i+1)->Option.getOr(list{})))})
-            }
             | _ => None
             }
-          })->List.filterMap(v => v),
+          })
+          ->List.filterMap(v => v),
         ),
       }
     },
   ),
 ])
 
-let documentToString = (document): string => {
+let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string => {
   let evaluate = (f, content): document => {
-    switch evaluator->Dict.get(f) {
+    switch extensions->Dict.get(f)->Option.orElse(evaluator->Dict.get(f)) {
     | None => failwith(`Unknown evaluator ${f}`)
     | Some(f) => f(content, document)
     }
@@ -424,4 +433,10 @@ let documentToString = (document): string => {
     }
   }
   documentToString(document)
+}
+
+let compile = (~document, ~extensions: dict<extension>=Dict.make()) => {
+  document
+  ->parseDocument
+  ->toHTMLString(~extensions)
 }
