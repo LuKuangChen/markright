@@ -1,5 +1,3 @@
-open Main
-
 let pad = content => {
   String.concat("  ", content->String.replaceAll("\n", "\n  "))
 }
@@ -41,7 +39,7 @@ let runTests = tests => {
 }
 
 let testTranslate = (testName, source, wanted) => {
-  makeTest(testName, () => source->compile, wanted)
+  makeTest(testName, () => source->Markright.compile, wanted)
 }
 
 runTests([

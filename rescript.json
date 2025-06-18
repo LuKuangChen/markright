@@ -4,10 +4,7 @@
   "sources": [
     {
       "dir": "src",
-      "subdirs": true,
-      "public": [
-        "Main"
-      ]
+      "subdirs": true
     },
     {
       "dir": "test",
