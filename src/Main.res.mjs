@@ -698,12 +698,15 @@ var evaluator = Object.fromEntries([
       ]
     ]);
 
-function toHTMLString($$document, extensionsOpt) {
+function compile($$document, extensionsOpt) {
   var extensions = extensionsOpt !== undefined ? extensionsOpt : ({});
+  var $$document$1 = parseDocument($$document);
+  var extensionsOpt$1 = extensions;
+  var extensions$1 = extensionsOpt$1 !== undefined ? extensionsOpt$1 : ({});
   var evaluate = function (f, content) {
-    var f$1 = Core__Option.orElse(extensions[f], evaluator[f]);
+    var f$1 = Core__Option.orElse(extensions$1[f], evaluator[f]);
     if (f$1 !== undefined) {
-      return f$1(content, $$document);
+      return f$1(content, $$document$1);
     } else {
       return PervasivesU.failwith("Unknown evaluator " + f);
     }
@@ -791,17 +794,10 @@ function toHTMLString($$document, extensionsOpt) {
     }
     return Core__List.toArray(Core__List.map($$document, blockToString)).join("");
   };
-  return documentToString($$document);
-}
-
-function compile($$document, extensionsOpt) {
-  var extensions = extensionsOpt !== undefined ? extensionsOpt : ({});
-  return toHTMLString(parseDocument($$document), extensions);
+  return documentToString($$document$1);
 }
 
 export {
-  parseDocument ,
-  toHTMLString ,
   compile ,
 }
 /* parseSpan Not a pure module */

@@ -41,7 +41,7 @@ let runTests = tests => {
 }
 
 let testTranslate = (testName, source, wanted) => {
-  makeTest(testName, () => source->parseDocument->toHTMLString, wanted)
+  makeTest(testName, () => source->compile, wanted)
 }
 
 runTests([
