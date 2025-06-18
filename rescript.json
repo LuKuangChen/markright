@@ -4,7 +4,10 @@
   "sources": [
     {
       "dir": "src",
-      "subdirs": true
+      "subdirs": true,
+      "public": [
+        "Markright"
+      ]
     },
     {
       "dir": "test",

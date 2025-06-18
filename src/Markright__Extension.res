@@ -1,4 +1,6 @@
-type t = (string, ~fullDocument: list<Concept.block>) => list<Concept.block>
+open Markright__Concept
+
+type t = (string, ~fullDocument: list<block>) => list<block>
 
 let newBlock = (f): t => {
   (content, ~fullDocument) => {

@@ -1,3 +1,6 @@
+module Concept = Markright__Concept
+module Extension = Markright__Extension
+
 open Concept
 
 type document_modifier =
