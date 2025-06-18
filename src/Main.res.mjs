@@ -7,7 +7,7 @@ import * as Core__List from "@rescript/core/src/Core__List.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as PervasivesU from "rescript/lib/es6/pervasivesU.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
-import * as Concepts$Markright from "./Concepts.res.mjs";
+import * as Concept$Markright from "./Concept.res.mjs";
 
 function takeWhile(xs, f) {
   if (!xs) {
@@ -630,7 +630,7 @@ var evaluator = Object.fromEntries([
       ],
       [
         "now",
-        (function (_content, _document) {
+        (function (_content, param) {
             var x = new Date().toISOString();
             return {
                     hd: {
@@ -714,7 +714,7 @@ function toHTMLString($$document, extensionsOpt) {
   var spanToString = function (span) {
     switch (span.TAG) {
       case "Tagged" :
-          var tag = Concepts$Markright.Tag.toHTMLString(span._0);
+          var tag = Concept$Markright.Tag.toHTMLString(span._0);
           return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
       case "Embeded" :
           return spansToString(asSpans(evaluate(span._0, span._1)));

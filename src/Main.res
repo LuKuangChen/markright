@@ -1,4 +1,4 @@
-open Concepts
+open Concept
 
 type document_modifier =
   | OrderedList
@@ -309,13 +309,11 @@ let checkListToString = (content: list<(bool, string)>): string => {
     ->Array.join("")}</ul>`
 }
 
-type extension = (string, list<block>) => list<block>
-
-let evaluator: dict<extension> = Dict.fromArray([
-  ("raw", (content, _) => list{Paragraph(list{Raw(content)})}),
+let evaluator: dict<Extension.t> = Dict.fromArray([
+  ("raw", (content, ~fullDocument as _) => list{Paragraph(list{Raw(content)})}),
   (
     "now",
-    (_content, _document) => {
+    (_content, ~fullDocument as _) => {
       Js.Date.make()
       ->Js.Date.toISOString
       ->(x => list{Paragraph(list{Plain(x)})})
@@ -323,7 +321,7 @@ let evaluator: dict<extension> = Dict.fromArray([
   ),
   (
     "toc",
-    (_, document) => {
+    (_, ~fullDocument as document) => {
       list{
         OrderedList(
           document
@@ -355,11 +353,11 @@ let evaluator: dict<extension> = Dict.fromArray([
   ),
 ])
 
-let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string => {
+let toHTMLString = (document, ~extensions: dict<Extension.t>=Dict.make()): string => {
   let evaluate = (f, content): list<block> => {
     switch extensions->Dict.get(f)->Option.orElse(evaluator->Dict.get(f)) {
     | None => failwith(`Unknown evaluator ${f}`)
-    | Some(f) => f(content, document)
+    | Some(f) => f(content, ~fullDocument=document)
     }
   }
 
@@ -435,7 +433,7 @@ let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string 
   documentToString(document)
 }
 
-let compile = (document, ~extensions: dict<extension>=Dict.make()) => {
+let compile = (document, ~extensions: dict<Extension.t>=Dict.make()) => {
   document
   ->parseDocument
   ->toHTMLString(~extensions)
