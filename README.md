@@ -30,23 +30,21 @@ A **document** is a list of *blocks*.
 
 A **block** is one of the following
 
-|         Meaning | Notation       | Content          |
-| --------------: | -------------- | ---------------- |
-|         Heading | Starts w/ `#`s | Document         |
-|       Quotation | Starts w/ `>`  | Document         |
-|    Ordered List | Starts w/ `.`  | Document         |
-|  Unordered List | Starts w/ `-`  | Document         |
-|    Checked List | Starts w/ `x`  | Document         |
-|  Unchecked List | Starts w/ `o`  | Document         |
-|   Table Element | Starts w/ `\|` | Document or `-`s |
-| Embeded Content | Starts w/ `=`  | Any              |
-|       Paragraph | Otherwise      | Spans            |
+|         Meaning | Notation       | Content  |
+| --------------: | -------------- | -------- |
+|         Heading | Starts w/ `#`s | Document |
+|       Quotation | Starts w/ `>`  | Document |
+|    Ordered List | Starts w/ `.`  | Document |
+|  Unordered List | Starts w/ `-`  | Document |
+|   Table Element | Starts w/ `\|` | Document |
+| Embeded Content | Starts w/ `=`  | Any      |
+|       Paragraph | Otherwise      | Spans    |
 
 A few notes on the table:
 
 - When a block starts with a symbol, the symbol must be followed by a whitespace and the subsequent lines of the same block must be indented by two whitespaces.
 - A heading's level is determined by the number of `#`s: one `#` means level-1 heading, `##` means level-2, and so on.
-- If a table element contains only `-`s, it is read as a break between table rows; Otherwise, it is. read as a table cell.
+- Table rows are seperated by `|-`.
 
 A **span** is one of the following
 
