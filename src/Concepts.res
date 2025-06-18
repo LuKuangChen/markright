@@ -7,7 +7,7 @@ module Tag = {
     | Underscored
     | Strikethrough
 
-  let toString = (t: t) => {
+  let toHTMLString = (t: t) => {
     switch t {
     | Oblique => "em"
     | Boldface => "strong"
@@ -20,19 +20,17 @@ module Tag = {
 }
 type tag = Tag.t
 
-type rec document = list<block>
-and paragraph = list<span>
-and block =
-  | Heading1(document)
-  | Heading2(document)
-  | Heading3(document)
-  | OrderedList(list<document>)
-  | UnorderedList(list<document>)
-  | CheckList(list<(bool, document)>)
-  | Table(list<list<document>>)
-  | Quotation(document)
+type rec block =
+  | Heading1(list<block>)
+  | Heading2(list<block>)
+  | Heading3(list<block>)
+  | OrderedList(list<list<block>>)
+  | UnorderedList(list<list<block>>)
+  | CheckList(list<(bool, list<block>)>)
+  | Table(list<list<list<block>>>)
+  | Quotation(list<block>)
   | Embeded(string, string)
-  | Paragraph(paragraph)
+  | Paragraph(list<span>)
   | Raw(string)
 and span =
   | Tagged(tag, list<span>)

@@ -714,7 +714,7 @@ function toHTMLString($$document, extensionsOpt) {
   var spanToString = function (span) {
     switch (span.TAG) {
       case "Tagged" :
-          var tag = Concepts$Markright.Tag.toString(span._0);
+          var tag = Concepts$Markright.Tag.toHTMLString(span._0);
           return "<" + tag + ">" + spansToString(span._1) + "</" + tag + ">";
       case "Embeded" :
           return spansToString(asSpans(evaluate(span._0, span._1)));

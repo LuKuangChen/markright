@@ -8,7 +8,7 @@ type document_modifier =
 
 type document_token =
   | ParagraphLine(string)
-  | SubDocument(document_modifier, document)
+  | SubDocument(document_modifier, list<block>)
   | TableBreak
   | Empty
   | Final(block)
@@ -57,7 +57,7 @@ let parseSpan: string => array<span_token> =
   ->makeSpanParser("~", Strikethrough)
 
 let parseParagraph = (it: string) => {
-  let groupTokens = (tokens: array<span_token>): paragraph => {
+  let groupTokens = (tokens: array<span_token>): list<span> => {
     let rec splitAtFirst = (ts, tag) => {
       switch ts {
       | list{} => failwith("not found")
@@ -121,7 +121,7 @@ let rec takeAllIndented = (indent: int, lines: list<string>) => {
   }
 }
 
-let makeTable = (es: list<option<document>>): list<list<document>> => {
+let makeTable = (es: list<option<list<block>>>): list<list<list<block>>> => {
   let rec collectRows = (row, es) => {
     switch es {
     | list{} => {
@@ -138,7 +138,7 @@ let makeTable = (es: list<option<document>>): list<list<document>> => {
   collectRows(list{}, es)
 }
 
-let rec groupLines = (ts: list<document_token>): document => {
+let rec groupLines = (ts: list<document_token>): list<block> => {
   switch ts {
   | list{} => list{}
   | list{TableBreak, ...ts} => {
@@ -221,7 +221,7 @@ let orFinal = (fst: option<'x>, snd: unit => 'x): 'x => {
   }
 }
 
-let parseDocument = (it: string): document => {
+let parseDocument = (it: string): list<block> => {
   let rec parse = (lines: list<string>): list<document_token> => {
     switch lines {
     | list{} => list{}
@@ -238,7 +238,7 @@ let parseDocument = (it: string): document => {
           None
         }
       }
-      let tryParseSubDocument = (mark, subdoc: document => document_token) => {
+      let tryParseSubDocument = (mark, subdoc: list<block> => document_token) => {
         tryParseSubBlock(mark, b => subdoc(parseDocument(b)))
       }
       tryParseSubDocument("#", d => Final(Heading1(d)))
@@ -273,7 +273,7 @@ let parseDocument = (it: string): document => {
       })
     }
   }
-  and parseDocument = (lines: list<string>): document => {
+  and parseDocument = (lines: list<string>): list<block> => {
     let lines: list<document_token> = parse(lines)
     groupLines(lines)
   }
@@ -293,7 +293,7 @@ let escape = (x: string): string => {
   ->String.replaceAll(`'`, "&#39;")
 }
 
-let asSpans = (document: document): list<span> => {
+let asSpans = (document: list<block>): list<span> => {
   switch document {
   | list{} => list{}
   | list{Raw(x)} => list{Raw(x)}
@@ -309,7 +309,7 @@ let checkListToString = (content: list<(bool, string)>): string => {
     ->Array.join("")}</ul>`
 }
 
-type extension = (string, document) => list<block>
+type extension = (string, list<block>) => list<block>
 
 let evaluator: dict<extension> = Dict.fromArray([
   ("raw", (content, _) => list{Paragraph(list{Raw(content)})}),
@@ -356,7 +356,7 @@ let evaluator: dict<extension> = Dict.fromArray([
 ])
 
 let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string => {
-  let evaluate = (f, content): document => {
+  let evaluate = (f, content): list<block> => {
     switch extensions->Dict.get(f)->Option.orElse(evaluator->Dict.get(f)) {
     | None => failwith(`Unknown evaluator ${f}`)
     | Some(f) => f(content, document)
@@ -372,7 +372,7 @@ let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string 
   and spanToString = span => {
     switch span {
     | Tagged(tag, spans) => {
-        let tag = Tag.toString(tag)
+        let tag = Tag.toHTMLString(tag)
         `<${tag}>${spansToString(spans)}</${tag}>`
       }
     | Raw(x) => x
@@ -404,7 +404,7 @@ let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string 
     | Raw(s) => s
     }
   }
-  and listToString = (ordered: bool, content: list<document>) => {
+  and listToString = (ordered: bool, content: list<list<block>>) => {
     let tag = ordered ? "ol" : "ul"
     let content =
       content
@@ -414,12 +414,12 @@ let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string 
       ->Array.join("")
     `<${tag}>${content}</${tag}>`
   }
-  and tableRowToString = (content: list<document>) => {
+  and tableRowToString = (content: list<list<block>>) => {
     let content = content->List.map(tableCellToString)->List.toArray->Array.join("")
     let tag = "tr"
     `<${tag}>${content}</${tag}>`
   }
-  and tableCellToString = (content: document) => {
+  and tableCellToString = (content: list<block>) => {
     `<td>${content->documentToString}</td>`
   }
   and documentToString = document => {

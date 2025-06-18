@@ -4,13 +4,17 @@
   "sources": [
     {
       "dir": "src",
-      "subdirs": true
+      "subdirs": true,
+      "public": [
+        "Main"
+      ]
     },
     {
       "dir": "test",
       "subdirs": true,
       "type": "dev"
-    }],
+    }
+  ],
   "package-specs": {
     "module": "esmodule",
     "in-source": true
