@@ -794,8 +794,14 @@ function toHTMLString($$document, extensionsOpt) {
   return documentToString($$document);
 }
 
+function compile($$document, extensionsOpt) {
+  var extensions = extensionsOpt !== undefined ? extensionsOpt : ({});
+  return toHTMLString(parseDocument($$document), extensions);
+}
+
 export {
   parseDocument ,
   toHTMLString ,
+  compile ,
 }
 /* parseSpan Not a pure module */

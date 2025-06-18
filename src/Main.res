@@ -435,7 +435,7 @@ let toHTMLString = (document, ~extensions: dict<extension>=Dict.make()): string 
   documentToString(document)
 }
 
-let compile = (~document, ~extensions: dict<extension>=Dict.make()) => {
+let compile = (document, ~extensions: dict<extension>=Dict.make()) => {
   document
   ->parseDocument
   ->toHTMLString(~extensions)
