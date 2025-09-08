@@ -4,7 +4,7 @@ KC's Markright is a like Markdown but done right. This repository describes the 
 
 ## Design Goals
 
-Overall, the goal is to stay close to Markdown, because may people including me are already familiar with Markdown's syntax, to improve consistency, and to improve extensibility to suit several needs.
+Overall, the goal is to stay close to Markdown, because many people including me are already familiar with Markdown's syntax, to improve consistency, and to improve extensibility to suit several needs.
 
 ### Similar semantics and syntaxes
 
